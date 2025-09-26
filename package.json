@@ -10,8 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@rive-app/react-canvas": "^4.23.4",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react-dom": "^19.1.1",
+    "react-loading-skeleton": "^3.5.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
