@@ -776,7 +776,7 @@ export default function Search() {
         {hasSearched && (() => {
           
           return (
-            <div className="p-4">
+            <div>
       {error && (
                 <p className="text-red-600 mb-4">{error}</p>
               )}
