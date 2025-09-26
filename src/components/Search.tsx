@@ -782,9 +782,9 @@ export default function Search() {
               )}
 
               {isLoading && (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 px-2">
                   {Array.from({ length: 40 }).map((_, i) => (
-                    <div key={i} className="w-[188px] max-w-[188px] xs:w-[188px]">
+                    <div key={i} className="w-[calc(50%-4px)] sm:w-[188px] max-w-[188px]">
                       <SkeletonCard />
                     </div>
                   ))}
@@ -796,7 +796,7 @@ export default function Search() {
               )}
 
               {!isLoading && products.length > 0 && (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 px-2">
                 {products.map((p, index) => {
                   // Generate realistic rating data based on product ID
                   const productHash = p.id.split('').reduce((a, b) => a + b.charCodeAt(0), 0)
@@ -813,7 +813,7 @@ export default function Search() {
                   return (
                     <div 
                       key={p.id} 
-                      className="bg-white relative w-[188px] max-w-[188px] xs:w-[188px] cursor-pointer hover:shadow-lg transition-shadow duration-200"
+                      className="bg-white relative w-[calc(50%-4px)] sm:w-[188px] max-w-[188px] cursor-pointer hover:shadow-lg transition-shadow duration-200"
                       onClick={() => openProductModal(index)}
                     >
                       {isFFProduct ? (
