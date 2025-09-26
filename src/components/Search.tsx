@@ -48,8 +48,63 @@ export default function Search() {
   const [basketCount, setBasketCount] = useState(0)
   const [basketTotal, setBasketTotal] = useState(0)
   const [lastScrollY, setLastScrollY] = useState(0)
+  
+  // State for product modal
+  const [selectedProductIndex, setSelectedProductIndex] = useState<number | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  
+  // Touch handling for swipe navigation
+  const [touchStart, setTouchStart] = useState<number | null>(null)
+  const [touchEnd, setTouchEnd] = useState<number | null>(null)
 
   const canSearch = useMemo(() => query.trim().length > 1, [query])
+
+  // Modal functions
+  const openProductModal = (index: number) => {
+    setSelectedProductIndex(index)
+    setIsModalOpen(true)
+    document.body.style.overflow = 'hidden' // Prevent background scroll
+  }
+
+  const closeProductModal = () => {
+    setIsModalOpen(false)
+    setSelectedProductIndex(null)
+    document.body.style.overflow = 'unset'
+  }
+
+  const navigateProduct = (direction: 'prev' | 'next') => {
+    if (selectedProductIndex === null) return
+    
+    if (direction === 'prev' && selectedProductIndex > 0) {
+      setSelectedProductIndex(selectedProductIndex - 1)
+    } else if (direction === 'next' && selectedProductIndex < products.length - 1) {
+      setSelectedProductIndex(selectedProductIndex + 1)
+    }
+  }
+
+  // Touch event handlers for swipe navigation
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null) // Reset touchEnd
+    setTouchStart(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return
+    
+    const distance = touchStart - touchEnd
+    const isLeftSwipe = distance > 50 // Minimum distance for swipe
+    const isRightSwipe = distance < -50
+
+    if (isLeftSwipe) {
+      navigateProduct('next') // Swipe left to go to next product
+    } else if (isRightSwipe) {
+      navigateProduct('prev') // Swipe right to go to previous product
+    }
+  }
 
   // Handle scroll for header visibility
   useEffect(() => {
@@ -74,6 +129,24 @@ export default function Search() {
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [lastScrollY])
+
+  // Keyboard navigation for modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isModalOpen) return
+      
+      if (e.key === 'Escape') {
+        closeProductModal()
+      } else if (e.key === 'ArrowLeft') {
+        navigateProduct('prev')
+      } else if (e.key === 'ArrowRight') {
+        navigateProduct('next')
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isModalOpen, selectedProductIndex])
 
   async function performSearch() {
     if (!canSearch) return
@@ -221,6 +294,261 @@ export default function Search() {
     if (first?.url) return { url: first.url, ratio: toNumber(first.aspectRatio) }
 
     return { url: p.images?.display?.default?.url || p.defaultImageUrl, ratio: undefined }
+  }
+
+  // Product Modal Component
+  const ProductModal = () => {
+    if (!isModalOpen || selectedProductIndex === null) return null
+    
+    const currentProduct = products[selectedProductIndex]
+    const prevProduct = selectedProductIndex > 0 ? products[selectedProductIndex - 1] : null
+    const nextProduct = selectedProductIndex < products.length - 1 ? products[selectedProductIndex + 1] : null
+    
+    // Generate mock data for current product
+    const productHash = currentProduct.id.split('').reduce((a, b) => a + b.charCodeAt(0), 0)
+    const rating = (3.0 + (productHash % 20) / 10).toFixed(1)
+    const reviewCount = Math.max(1, (productHash % 50) + 5)
+    const starCount = Math.floor(parseFloat(rating))
+    
+    const isFFProduct = currentProduct.brandName?.toLowerCase().includes('f&f') || 
+                       currentProduct.brandName?.toLowerCase().includes('florence') ||
+                       currentProduct.title?.toLowerCase().includes('f&f') ||
+                       currentProduct.title?.toLowerCase().includes('florence')
+    
+    const { url: currentImageUrl } = getImageUrl(currentProduct)
+    
+    // Mock color variations
+    const colors = ['Black', 'White', 'Navy', 'Grey']
+    const sizes = isFFProduct ? ['XS', 'S', 'M', 'L', 'XL', 'XXL'] : ['Small', 'Medium', 'Large']
+    
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center">
+        {/* Backdrop */}
+        <div 
+          className="absolute inset-0 bg-black bg-opacity-25 transition-opacity"
+          onClick={closeProductModal}
+        />
+        
+        {/* Modal Content */}
+        <div 
+          className="relative w-full max-w-6xl mx-4 bg-white rounded-lg shadow-2xl flex flex-col md:flex-row overflow-hidden max-h-[90vh]"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          {/* Previous Product Preview (Desktop Left) */}
+          {prevProduct && (
+            <div 
+              className="hidden md:block w-20 flex-shrink-0 opacity-30 hover:opacity-50 transition-opacity cursor-pointer bg-gray-100 flex items-center justify-center"
+              onClick={() => navigateProduct('prev')}
+            >
+              <img 
+                src={getImageUrl(prevProduct).url}
+                alt={prevProduct.title}
+                className="w-full h-32 object-cover"
+              />
+            </div>
+          )}
+          
+          {/* Main Content */}
+          <div className="flex-1 flex flex-col md:flex-row">
+            {/* Large Image */}
+            <div className="w-full md:w-1/2 p-4 md:p-6 bg-gray-50 flex items-center justify-center">
+              <div className="relative w-full max-w-sm md:max-w-md aspect-square">
+                <img 
+                  src={currentImageUrl}
+                  alt={currentProduct.title}
+                  className="w-full h-full object-cover rounded-lg"
+                />
+              </div>
+            </div>
+            
+            {/* Product Details */}
+            <div className="w-full md:w-1/2 p-4 md:p-6 overflow-y-auto">
+              {/* Close Button */}
+              <button 
+                onClick={closeProductModal}
+                className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 transition-colors"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              </button>
+              
+              {/* Brand */}
+              <p className="text-sm text-gray-600 mb-2">
+                {currentProduct.brandName || 'Sponsored'}
+              </p>
+              
+              {/* Title */}
+              <h1 className={`text-2xl font-bold mb-4 ${isFFProduct ? 'text-black' : 'text-gray-900'}`}>
+                {currentProduct.title}
+              </h1>
+              
+              {/* Price */}
+              <div className="mb-4">
+                <span className="text-3xl font-bold text-gray-900">
+                  £{(currentProduct.price?.actual ?? currentProduct.price?.price ?? 0).toFixed(2)}
+                </span>
+                {currentProduct.price?.price && currentProduct.price?.price !== currentProduct.price?.actual && (
+                  <span className="ml-3 text-lg text-gray-500 line-through">
+                    £{currentProduct.price?.price.toFixed(2)}
+                  </span>
+                )}
+              </div>
+              
+              {/* Rating */}
+              <div className="flex items-center gap-3 mb-6">
+                <div className="flex">
+                  {[1,2,3,4,5].map((star) => (
+                    <svg key={star} className={`w-5 h-5 ${star <= starCount ? 'text-yellow-400' : 'text-gray-300'}`} fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  ))}
+                </div>
+                <span className="text-gray-600">
+                  {rating} ({reviewCount} reviews)
+                </span>
+              </div>
+              
+              {/* Color Variations */}
+              <div className="mb-6">
+                <h3 className="font-medium text-gray-900 mb-3">Color</h3>
+                <div className="flex gap-2">
+                  {colors.map((color, index) => (
+                    <button 
+                      key={color}
+                      className={`px-4 py-2 border rounded-md text-sm ${
+                        index === 0 
+                          ? `${isFFProduct ? 'border-black bg-black text-white' : 'border-blue-600 bg-blue-600 text-white'}` 
+                          : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                      }`}
+                    >
+                      {color}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Size Selection */}
+              <div className="mb-6">
+                <h3 className="font-medium text-gray-900 mb-3">Size</h3>
+                <div className="grid grid-cols-3 gap-2">
+                  {sizes.map((size, index) => (
+                    <button 
+                      key={size}
+                      className={`py-2 border rounded-md text-sm ${
+                        index === 2 
+                          ? `${isFFProduct ? 'border-black bg-black text-white' : 'border-blue-600 bg-blue-600 text-white'}` 
+                          : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                      }`}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Size Guide Link */}
+              <button className={`text-sm ${isFFProduct ? 'text-black' : 'text-blue-600'} hover:underline mb-6 flex items-center gap-1`}>
+                Size guide
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                  <path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+              
+              {/* Add to Basket */}
+              <button 
+                onClick={() => {
+                  const unit = (currentProduct.price?.actual ?? currentProduct.price?.price ?? 1.00)
+                  setBasketCount(prev => prev + 1)
+                  setBasketTotal(prev => Number((prev + unit).toFixed(2)))
+                  setIsHeaderVisible(true)
+                  closeProductModal()
+                }}
+                className={`w-full ${isFFProduct ? 'bg-black hover:bg-gray-800' : 'bg-blue-600 hover:bg-blue-700'} text-white py-3 px-6 rounded-md font-medium transition-colors`}
+              >
+                Add to basket
+              </button>
+            </div>
+          </div>
+          
+          {/* Next Product Preview (Desktop Right) */}
+          {nextProduct && (
+            <div 
+              className="hidden md:block w-20 flex-shrink-0 opacity-30 hover:opacity-50 transition-opacity cursor-pointer bg-gray-100 flex items-center justify-center"
+              onClick={() => navigateProduct('next')}
+            >
+              <img 
+                src={getImageUrl(nextProduct).url}
+                alt={nextProduct.title}
+                className="w-full h-32 object-cover"
+              />
+            </div>
+          )}
+          
+          {/* Mobile Navigation - Bottom */}
+          <div className="md:hidden flex flex-col items-center gap-2 p-4 bg-gray-50 border-t">
+            {/* Swipe Indicator */}
+            <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
+              <span>←</span>
+              <span>Swipe to navigate</span>
+              <span>→</span>
+            </div>
+            
+            {/* Navigation Buttons */}
+            <div className="flex justify-center gap-4">
+              {prevProduct && (
+                <button 
+                  onClick={() => navigateProduct('prev')}
+                  className="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow hover:bg-gray-50 transition-colors"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span className="text-sm">Previous</span>
+                </button>
+              )}
+              
+              {nextProduct && (
+                <button 
+                  onClick={() => navigateProduct('next')}
+                  className="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow hover:bg-gray-50 transition-colors"
+                >
+                  <span className="text-sm">Next</span>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
+          
+          {/* Desktop Navigation Arrows */}
+          {prevProduct && (
+            <button 
+              onClick={() => navigateProduct('prev')}
+              className="hidden md:flex absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-white rounded-full shadow-lg items-center justify-center hover:bg-gray-50 transition-colors"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          )}
+          
+          {nextProduct && (
+            <button 
+              onClick={() => navigateProduct('next')}
+              className="hidden md:flex absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-white rounded-full shadow-lg items-center justify-center hover:bg-gray-50 transition-colors"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          )}
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -469,7 +797,7 @@ export default function Search() {
 
               {!isLoading && products.length > 0 && (
               <div className="flex flex-wrap gap-2">
-                {products.map((p) => {
+                {products.map((p, index) => {
                   // Generate realistic rating data based on product ID
                   const productHash = p.id.split('').reduce((a, b) => a + b.charCodeAt(0), 0)
                   const rating = (3.0 + (productHash % 20) / 10).toFixed(1) // 3.0 - 5.0
@@ -483,7 +811,11 @@ export default function Search() {
                                     p.title?.toLowerCase().includes('florence')
                   
                   return (
-                    <div key={p.id} className="bg-white relative w-[188px] max-w-[188px] xs:w-[188px]">
+                    <div 
+                      key={p.id} 
+                      className="bg-white relative w-[188px] max-w-[188px] xs:w-[188px] cursor-pointer hover:shadow-lg transition-shadow duration-200"
+                      onClick={() => openProductModal(index)}
+                    >
                       {isFFProduct ? (
                         // F&F (Clothing) Card Design
                         <>
@@ -522,7 +854,8 @@ export default function Search() {
                               </div>
 
                               <button
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation() // Prevent modal from opening
                                   const unit = (p.price?.actual ?? p.price?.price ?? 1.00)
                                   setBasketCount(prev => prev + 1)
                                   setBasketTotal(prev => Number((prev + unit).toFixed(2)))
@@ -690,7 +1023,8 @@ export default function Search() {
                                     </div>
                                   </div>
                                 <button
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.stopPropagation() // Prevent modal from opening
                                     const unit = (p.price?.actual ?? p.price?.price ?? 1.00)
                                     setBasketCount(prev => prev + 1)
                                     setBasketTotal(prev => Number((prev + unit).toFixed(2)))
@@ -715,9 +1049,12 @@ export default function Search() {
             )}
                   </div>
                 )
-              })()}
-            </div>
-          </div>
+        })()}
+      </div>
+      
+      {/* Product Modal */}
+      {isModalOpen && <ProductModal />}
+    </div>
   )
 }
 
