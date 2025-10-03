@@ -287,29 +287,33 @@ export default function Search() {
 
   // Zoom in to a specific card
   const zoomInToCard = (productId: string) => {
+    const cardElement = cardRefs.current[productId]
+    if (!cardElement) return
+    
+    // Get card's current position BEFORE layout changes
+    const initialRect = cardElement.getBoundingClientRect()
+    const initialTop = initialRect.top
+    
+    // Change view mode
     setViewMode('zoomIn')
     setActiveCardId(productId)
     
-    // Wait longer for the grid transition to complete
-    setTimeout(() => {
-      const cardElement = cardRefs.current[productId]
-      if (cardElement) {
-        // Get the card's position
-        const cardRect = cardElement.getBoundingClientRect()
-        const absoluteTop = window.pageYOffset + cardRect.top
+    // After layout updates, adjust scroll to keep card in same position
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const newRect = cardElement.getBoundingClientRect()
+        const newTop = newRect.top
         
-        // Calculate offset to center the card (accounting for header)
-        const headerHeight = 124 // Fixed header height
-        const viewportCenter = window.innerHeight / 2
-        const scrollTo = absoluteTop - viewportCenter + (cardRect.height / 2) + headerHeight
+        // Calculate how much the card moved
+        const deltaY = newTop - initialTop
         
-        // Smooth scroll to position
-        window.scrollTo({
-          top: Math.max(0, scrollTo),
-          behavior: 'smooth'
+        // Adjust scroll by that amount to keep card in same visual position
+        window.scrollBy({
+          top: deltaY,
+          behavior: 'instant' // Instant so it feels like the grid rearranged around the card
         })
-      }
-    }, 600) // Wait for transition duration (500ms) + buffer
+      })
+    })
   }
 
   // Skeleton card component
