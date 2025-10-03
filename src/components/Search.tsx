@@ -60,6 +60,9 @@ export default function Search() {
   // Thumbnail view mode for clothing products
   type ViewMode = 'default' | 'image-only' | 'large'
   const [viewMode, setViewMode] = useState<ViewMode>('default')
+  
+  // Track which card is currently tapped/hovered for overlay display
+  const [activeCardId, setActiveCardId] = useState<string | null>(null)
 
   // Check URL for query parameter on mount
   useEffect(() => {
@@ -70,6 +73,19 @@ export default function Search() {
       // Automatically perform search
       performSearchWithQuery(urlQuery)
     }
+  }, [])
+
+  // Close active card when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (!target.closest('[data-product-card]')) {
+        setActiveCardId(null)
+      }
+    }
+    
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
   }, [])
 
   const canSearch = useMemo(() => query.trim().length > 1, [query])
@@ -866,47 +882,69 @@ export default function Search() {
                   
                   return (
                     <div 
-                      key={p.id} 
+                      key={p.id}
+                      data-product-card
                       className={`bg-white relative cursor-pointer hover:shadow-lg transition-all duration-500 ease-in-out ${
                         viewMode === 'large' 
                           ? 'w-full sm:w-1/2 md:w-1/4' 
                           : viewMode === 'image-only'
                           ? 'w-1/4 sm:w-1/6 md:w-[calc(100%/12)]'
                           : 'w-1/3 sm:w-1/4 md:w-[calc(100%/8)]'
-                      }`}
-                      onClick={() => openProductModal(index)}
+                      } ${activeCardId === p.id ? 'active-card' : ''}`}
+                      onClick={(e) => {
+                        // If card is already active, open modal
+                        if (activeCardId === p.id) {
+                          openProductModal(index)
+                        } else {
+                          // First tap: activate the card to show overlay
+                          e.stopPropagation()
+                          setActiveCardId(p.id)
+                        }
+                      }}
+                      onMouseEnter={() => setActiveCardId(p.id)}
+                      onMouseLeave={() => setActiveCardId(null)}
+                      tabIndex={0}
+                      onFocus={() => setActiveCardId(p.id)}
+                      onBlur={() => setActiveCardId(null)}
                     >
                       {isFFProduct ? (
                         // F&F (Clothing) Card Design
                         <>
                           {/* Image Container - 4:5 aspect ratio with hover/tap overlay */}
-                          <div className={`w-full aspect-[4/5] relative overflow-hidden group transition-all duration-500 ease-in-out ${
+                          <div className={`w-full aspect-[4/5] relative overflow-hidden transition-all duration-500 ease-in-out ${
                             viewMode === 'large' ? 'aspect-[4/5]' : 'aspect-[4/5]'
                           }`}>
                             {(() => {
                               const { url } = getImageUrl(p)
                               // Get second image if available
                               const secondImage = p.media?.images?.[1]?.url || p.media?.images?.[0]?.url || url
+                              const isActive = activeCardId === p.id
                               
                               return (
                                 <>
                                   {/* First image - default */}
                                   <img
                                     src={url}
-                                    className="absolute inset-0 w-full h-full object-cover transition-all duration-300 ease-out group-hover:opacity-0"
+                                    className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 ease-out ${
+                                      isActive ? 'opacity-0' : 'opacity-100'
+                                    }`}
                                     alt={p.title}
                                   />
                                   
-                                  {/* Second image - shown on hover */}
+                                  {/* Second image - shown on hover/tap */}
                                   <img
                                     src={secondImage}
-                                    className="absolute inset-0 w-full h-full object-cover transition-all duration-300 ease-out opacity-0 group-hover:opacity-100 group-hover:scale-110"
+                                    className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 ease-out ${
+                                      isActive ? 'opacity-100 scale-110' : 'opacity-0 scale-100'
+                                    }`}
                                     alt={p.title}
                                   />
                                   
                                   {/* Info overlay - shown on hover/tap, hidden in image-only mode */}
                                   {viewMode !== 'image-only' && (
-                                    <div className="absolute bottom-0 left-0 right-0 bg-white px-4 py-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                                    <div className={`absolute bottom-0 left-0 right-0 bg-white px-4 py-3 transition-opacity duration-200 pointer-events-none ${
+                                      isActive ? 'opacity-100' : 'opacity-0'
+                                    }`}>
                                       {/* Title */}
                                       <h3 className="text-sm font-bold text-black leading-[18px] mb-2 line-clamp-2">
                                         {(() => {
