@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import type { ProductItem } from '../lib/tesco'
 import { TescoAPI } from '../lib/tesco'
 import Skeleton from 'react-loading-skeleton'
@@ -63,6 +63,8 @@ export default function Search() {
   
   // Track which card is currently tapped/hovered for overlay display
   const [activeCardId, setActiveCardId] = useState<string | null>(null)
+  // Track which card was active at the start of a touch to prevent opening modal on first tap
+  const touchStartActiveCardRef = useRef<string | null>(null)
 
   // Check URL for query parameter on mount
   useEffect(() => {
@@ -891,22 +893,23 @@ export default function Search() {
                           ? 'w-1/4 sm:w-1/6 md:w-[calc(100%/12)]'
                           : 'w-1/3 sm:w-1/4 md:w-[calc(100%/8)]'
                       } ${activeCardId === p.id ? 'active-card' : ''}`}
-                      onTouchStart={(e) => {
-                        // Touch event: activate on first tap, open on second
-                        if (activeCardId === p.id) {
-                          // Already active, will open modal on touchend
-                        } else {
-                          // First tap: activate the card
-                          e.stopPropagation()
+                      onTouchStart={() => {
+                        // Store which card (if any) was active when touch started
+                        touchStartActiveCardRef.current = activeCardId
+                        
+                        // If this card isn't already active, activate it
+                        if (activeCardId !== p.id) {
                           setActiveCardId(p.id)
                         }
                       }}
                       onTouchEnd={(e) => {
-                        // If card was already active before this touch, open modal
-                        if (activeCardId === p.id) {
+                        // Only open modal if card was ALREADY active before this touch sequence
+                        if (touchStartActiveCardRef.current === p.id) {
                           e.preventDefault() // Prevent click event
                           openProductModal(index)
                         }
+                        // Reset the ref
+                        touchStartActiveCardRef.current = null
                       }}
                       onClick={() => {
                         // Mouse click: only for desktop, open modal directly
