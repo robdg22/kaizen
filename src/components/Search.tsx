@@ -338,7 +338,17 @@ export default function Search() {
               
               {/* Title */}
               <h1 className={`text-2xl font-bold mb-4 ${isFFProduct ? 'text-black' : 'text-gray-900'}`}>
-                {currentProduct.title}
+                {(() => {
+                  let title = currentProduct.title
+                  // Remove "F&F " from start
+                  title = title.replace(/^F&F\s+/i, '')
+                  // Remove everything from " in" onwards
+                  const inIndex = title.toLowerCase().indexOf(' in')
+                  if (inIndex !== -1) {
+                    title = title.substring(0, inIndex)
+                  }
+                  return title
+                })()}
               </h1>
               
               {/* Price */}
@@ -867,7 +877,17 @@ export default function Search() {
                                     <div className="absolute bottom-0 left-0 right-0 bg-white px-4 py-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
                                       {/* Title */}
                                       <h3 className="text-sm font-bold text-black leading-[18px] mb-2 line-clamp-2">
-                                        {p.title}
+                                        {(() => {
+                                          let title = p.title
+                                          // Remove "F&F " from start
+                                          title = title.replace(/^F&F\s+/i, '')
+                                          // Remove everything from " in" onwards
+                                          const inIndex = title.toLowerCase().indexOf(' in')
+                                          if (inIndex !== -1) {
+                                            title = title.substring(0, inIndex)
+                                          }
+                                          return title
+                                        })()}
                                       </h3>
                                       
                                       {/* Price */}
