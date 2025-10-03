@@ -784,7 +784,8 @@ export default function Search() {
                         <div 
                           className="absolute bg-black h-[24px] top-[2px] w-[27px] transition-all duration-200"
                           style={{
-                            left: viewMode === 'large' ? '2px' : viewMode === 'default' ? '29px' : '56px'
+                            left: viewMode === 'large' ? '2px' : viewMode === 'default' ? '29px' : '56px',
+                            transitionTimingFunction: 'cubic-bezier(0.77, 0, 0.18, 1)'
                           }}
                         />
                         
