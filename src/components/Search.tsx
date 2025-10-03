@@ -71,6 +71,8 @@ export default function Search() {
   const preloadedImagesRef = useRef<Set<string>>(new Set())
   // Track transitioning state for blur effect
   const [transitioningCards, setTransitioningCards] = useState<Set<string>>(new Set())
+  // Track card refs for scrolling
+  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
   // Check URL for query parameter on mount
   useEffect(() => {
@@ -280,6 +282,27 @@ export default function Search() {
       const newSet = new Set(prev)
       newSet.delete(productId)
       return newSet
+    })
+  }
+
+  // Zoom in to a specific card
+  const zoomInToCard = (productId: string) => {
+    setViewMode('zoomIn')
+    setActiveCardId(productId)
+    
+    // Wait for layout to update, then scroll to card
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const cardElement = cardRefs.current[productId]
+        if (cardElement) {
+          // Scroll card into view smoothly, centered
+          cardElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center',
+            inline: 'nearest'
+          })
+        }
+      })
     })
   }
 
@@ -937,6 +960,7 @@ export default function Search() {
                   return (
                     <div 
                       key={p.id}
+                      ref={(el) => { cardRefs.current[p.id] = el }}
                       data-product-card
                       className={`bg-white relative cursor-pointer hover:shadow-lg transition-all duration-500 ease-[cubic-bezier(0.77,0,0.18,1)] ${
                         viewMode === 'zoomIn' 
@@ -951,11 +975,11 @@ export default function Search() {
                         
                         // If this card isn't already active, activate it
                         if (activeCardId !== p.id) {
-                          setActiveCardId(p.id)
-                          
-                          // On mobile (< 640px), switch to zoomIn view when tapping card in default or zoomOut mode
+                          // On mobile (< 640px), zoom in to this card when tapping in default or zoomOut mode
                           if (window.innerWidth < 640 && (viewMode === 'default' || viewMode === 'zoomOut')) {
-                            setViewMode('zoomIn')
+                            zoomInToCard(p.id)
+                          } else {
+                            setActiveCardId(p.id)
                           }
                         }
                       }}
