@@ -65,6 +65,8 @@ export default function Search() {
   const [activeCardId, setActiveCardId] = useState<string | null>(null)
   // Track which card was active at the start of a touch to prevent opening modal on first tap
   const touchStartActiveCardRef = useRef<string | null>(null)
+  // Track currently displayed image index for each card
+  const [cardImageIndex, setCardImageIndex] = useState<Record<string, number>>({})
 
   // Check URL for query parameter on mount
   useEffect(() => {
@@ -931,65 +933,145 @@ export default function Search() {
                         // F&F (Clothing) Card Design
                         <>
                           {/* Image Container - 4:5 aspect ratio with hover/tap overlay */}
-                          <div className={`w-full aspect-[4/5] relative overflow-hidden transition-all duration-500 ease-in-out ${
-                            viewMode === 'large' ? 'aspect-[4/5]' : 'aspect-[4/5]'
-                          }`}>
+                          <div 
+                            className={`w-full aspect-[4/5] relative overflow-hidden transition-all duration-500 ease-in-out ${
+                              viewMode === 'large' ? 'aspect-[4/5]' : 'aspect-[4/5]'
+                            }`}
+                            onTouchStart={(e) => {
+                              // Track touch start position for swipe detection
+                              const touch = e.touches[0]
+                              const cardElement = e.currentTarget
+                              cardElement.setAttribute('data-touch-start-x', touch.clientX.toString())
+                              cardElement.setAttribute('data-touch-start-y', touch.clientY.toString())
+                            }}
+                            onTouchMove={(e) => {
+                              const touch = e.touches[0]
+                              const cardElement = e.currentTarget
+                              const startX = parseFloat(cardElement.getAttribute('data-touch-start-x') || '0')
+                              const startY = parseFloat(cardElement.getAttribute('data-touch-start-y') || '0')
+                              const diffX = Math.abs(touch.clientX - startX)
+                              const diffY = Math.abs(touch.clientY - startY)
+                              
+                              // If horizontal swipe is detected (more horizontal than vertical)
+                              if (diffX > diffY && diffX > 10) {
+                                cardElement.setAttribute('data-is-swiping', 'true')
+                              }
+                            }}
+                            onTouchEnd={(e) => {
+                              const cardElement = e.currentTarget
+                              const isSwiping = cardElement.getAttribute('data-is-swiping') === 'true'
+                              
+                              if (isSwiping) {
+                                const touch = e.changedTouches[0]
+                                const startX = parseFloat(cardElement.getAttribute('data-touch-start-x') || '0')
+                                const diffX = touch.clientX - startX
+                                const images = p.media?.images || []
+                                
+                                if (images.length > 1) {
+                                  const currentIndex = cardImageIndex[p.id] || 0
+                                  let newIndex = currentIndex
+                                  
+                                  // Swipe left -> next image
+                                  if (diffX < -50) {
+                                    newIndex = (currentIndex + 1) % images.length
+                                  }
+                                  // Swipe right -> previous image
+                                  else if (diffX > 50) {
+                                    newIndex = currentIndex === 0 ? images.length - 1 : currentIndex - 1
+                                  }
+                                  
+                                  setCardImageIndex(prev => ({ ...prev, [p.id]: newIndex }))
+                                  e.preventDefault()
+                                  e.stopPropagation()
+                                }
+                                
+                                cardElement.removeAttribute('data-is-swiping')
+                              }
+                              
+                              cardElement.removeAttribute('data-touch-start-x')
+                              cardElement.removeAttribute('data-touch-start-y')
+                            }}
+                          >
                             {(() => {
                               const { url } = getImageUrl(p)
-                              // Get second image if available
-                              const secondImage = p.media?.images?.[1]?.url || p.media?.images?.[0]?.url || url
+                              const images = p.media?.images || [{ url }]
+                              const currentImageIndex = cardImageIndex[p.id] || 0
+                              const currentImage = images[currentImageIndex]?.url || url
                               const isActive = activeCardId === p.id
                               
                               return (
                                 <>
-                                  {/* First image - default */}
+                                  {/* Main image - scaled on hover/tap */}
                                   <img
-                                    src={url}
+                                    src={currentImage}
                                     className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 ease-out ${
-                                      isActive ? 'opacity-0' : 'opacity-100'
-                                    }`}
-                                    alt={p.title}
-                                  />
-                                  
-                                  {/* Second image - shown on hover/tap */}
-                                  <img
-                                    src={secondImage}
-                                    className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 ease-out ${
-                                      isActive ? 'opacity-100 scale-110' : 'opacity-0 scale-100'
+                                      isActive ? 'scale-105' : 'scale-100'
                                     }`}
                                     alt={p.title}
                                   />
                                   
                                   {/* Info overlay - shown on hover/tap, hidden in image-only mode */}
                                   {viewMode !== 'image-only' && (
-                                    <div className={`absolute bottom-0 left-0 right-0 bg-white px-4 py-3 transition-opacity duration-200 pointer-events-none ${
+                                    <div className={`absolute bottom-0 left-0 right-0 bg-white transition-all duration-200 ${
                                       isActive ? 'opacity-100' : 'opacity-0'
                                     }`}>
-                                      {/* Title */}
-                                      <h3 className="text-sm font-bold text-black leading-[18px] mb-2 line-clamp-2">
-                                        {(() => {
-                                          let title = p.title
-                                          // Remove "F&F " from start
-                                          title = title.replace(/^F&F\s+/i, '')
-                                          // Remove everything from " in" onwards
-                                          const inIndex = title.toLowerCase().indexOf(' in')
-                                          if (inIndex !== -1) {
-                                            title = title.substring(0, inIndex)
-                                          }
-                                          return title
-                                        })()}
-                                      </h3>
+                                      {/* Image thumbnails */}
+                                      {images.length > 1 && (
+                                        <div className="flex gap-1 px-2 pt-2 pb-1 pointer-events-auto">
+                                          {images.map((img, imgIndex) => (
+                                            <button
+                                              key={imgIndex}
+                                              className={`w-8 h-10 flex-shrink-0 rounded overflow-hidden border-2 transition-all ${
+                                                imgIndex === currentImageIndex 
+                                                  ? 'border-black' 
+                                                  : 'border-transparent hover:border-gray-400'
+                                              }`}
+                                              onMouseEnter={(e) => {
+                                                e.stopPropagation()
+                                                setCardImageIndex(prev => ({ ...prev, [p.id]: imgIndex }))
+                                              }}
+                                              onClick={(e) => {
+                                                e.stopPropagation()
+                                                setCardImageIndex(prev => ({ ...prev, [p.id]: imgIndex }))
+                                              }}
+                                            >
+                                              <img
+                                                src={img.url}
+                                                className="w-full h-full object-cover"
+                                                alt={`${p.title} - view ${imgIndex + 1}`}
+                                              />
+                                            </button>
+                                          ))}
+                                        </div>
+                                      )}
                                       
-                                      {/* Price */}
-                                      <div className="flex items-baseline gap-2">
-                                        <span className="text-base font-bold text-black leading-5">
-                                          £{(p.price?.actual ?? p.price?.price ?? 0).toFixed(2)}
-                                        </span>
-                                        {p.price?.price && p.price?.price !== p.price?.actual && (
-                                          <span className="text-sm text-gray-500 line-through">
-                                            £{p.price?.price.toFixed(2)}
+                                      <div className="px-4 pb-3 pointer-events-none">
+                                        {/* Title */}
+                                        <h3 className="text-sm font-bold text-black leading-[18px] mb-2 line-clamp-2">
+                                          {(() => {
+                                            let title = p.title
+                                            // Remove "F&F " from start
+                                            title = title.replace(/^F&F\s+/i, '')
+                                            // Remove everything from " in" onwards
+                                            const inIndex = title.toLowerCase().indexOf(' in')
+                                            if (inIndex !== -1) {
+                                              title = title.substring(0, inIndex)
+                                            }
+                                            return title
+                                          })()}
+                                        </h3>
+                                        
+                                        {/* Price */}
+                                        <div className="flex items-baseline gap-2">
+                                          <span className="text-base font-bold text-black leading-5">
+                                            £{(p.price?.actual ?? p.price?.price ?? 0).toFixed(2)}
                                           </span>
-                                        )}
+                                          {p.price?.price && p.price?.price !== p.price?.actual && (
+                                            <span className="text-sm text-gray-500 line-through">
+                                              £{p.price?.price.toFixed(2)}
+                                            </span>
+                                          )}
+                                        </div>
                                       </div>
                                     </div>
                                   )}
