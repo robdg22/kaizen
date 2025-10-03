@@ -746,7 +746,7 @@ export default function Search() {
                   {Array.from({ length: 40 }).map((_, i) => (
                     <div key={i} className={`transition-all duration-500 ease-in-out ${
                       viewMode === 'large' 
-                        ? 'w-[calc(50%-12px)] sm:w-[376px] max-w-[376px]' 
+                        ? 'w-[calc(50%-12px)] sm:w-[calc(25%-18px)] flex-grow max-w-[500px]' 
                         : viewMode === 'image-only'
                         ? 'w-[calc(33.333%-5.33px)] sm:w-[125px] max-w-[125px]'
                         : 'w-[calc(50%-4px)] sm:w-[188px] max-w-[188px]'
@@ -848,7 +848,7 @@ export default function Search() {
                       key={p.id} 
                       className={`bg-white relative cursor-pointer hover:shadow-lg transition-all duration-500 ease-in-out ${
                         viewMode === 'large' 
-                          ? 'w-[calc(50%-12px)] sm:w-[376px] max-w-[376px]' 
+                          ? 'w-[calc(50%-12px)] sm:w-[calc(25%-18px)] flex-grow max-w-[500px]' 
                           : viewMode === 'image-only'
                           ? 'w-[calc(33.333%-5.33px)] sm:w-[125px] max-w-[125px]'
                           : 'w-[calc(50%-4px)] sm:w-[188px] max-w-[188px]'
