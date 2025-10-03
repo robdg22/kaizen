@@ -73,6 +73,8 @@ export default function Search() {
   const [transitioningCards, setTransitioningCards] = useState<Set<string>>(new Set())
   // Track card refs for scrolling
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  // Track which card is expanded (zoomed) on mobile
+  const [expandedCardId, setExpandedCardId] = useState<string | null>(null)
 
   // Check URL for query parameter on mount
   useEffect(() => {
@@ -285,32 +287,26 @@ export default function Search() {
     })
   }
 
-  // Zoom in to a specific card
-  const zoomInToCard = (productId: string) => {
-    const cardElement = cardRefs.current[productId]
-    if (!cardElement) return
-    
-    // Get card's absolute position on page BEFORE layout changes
-    const initialRect = cardElement.getBoundingClientRect()
-    const scrollY = window.pageYOffset
-    const absolutePosition = scrollY + initialRect.top
-    
-    // Change view mode
-    setViewMode('zoomIn')
+  // Expand a specific card to full width
+  const expandCard = (productId: string) => {
+    setExpandedCardId(productId)
     setActiveCardId(productId)
-    
-    // Wait for transition to complete, then adjust position
-    setTimeout(() => {
-      // Calculate how much to scroll to put card back in original viewport position
-      const targetScroll = absolutePosition - initialRect.top
-      
-      // Set scroll instantly
-      window.scrollTo({
-        top: targetScroll,
-        behavior: 'auto'
-      })
-    }, 550) // Wait for 500ms transition + small buffer
   }
+
+  // Close expanded card when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (expandedCardId && !target.closest('[data-product-card]')) {
+        setExpandedCardId(null)
+      }
+    }
+    
+    if (expandedCardId) {
+      document.addEventListener('click', handleClickOutside)
+      return () => document.removeEventListener('click', handleClickOutside)
+    }
+  }, [expandedCardId])
 
   // Skeleton card component
   const SkeletonCard = () => (
@@ -969,7 +965,10 @@ export default function Search() {
                       ref={(el) => { cardRefs.current[p.id] = el }}
                       data-product-card
                       className={`bg-white relative cursor-pointer hover:shadow-lg transition-all duration-500 ease-[cubic-bezier(0.77,0,0.18,1)] ${
-                        viewMode === 'zoomIn' 
+                        // If this card is expanded on mobile, make it full width
+                        expandedCardId === p.id
+                          ? 'w-full z-10'
+                          : viewMode === 'zoomIn' 
                           ? 'w-full sm:w-full md:w-1/2 lg:w-1/3 xl:w-1/4 2xl:w-1/4' 
                           : viewMode === 'zoomOut'
                           ? 'w-1/3 sm:w-1/3 md:w-1/4 lg:w-1/6 xl:w-[14.285714%] 2xl:w-1/8'
@@ -1005,9 +1004,9 @@ export default function Search() {
                         
                         // Only activate if not scrolling
                         if (!isScrolling && activeCardId !== p.id) {
-                          // On mobile (< 640px), zoom in to this card when tapping in default or zoomOut mode
+                          // On mobile (< 640px), expand this card when tapping in default or zoomOut mode
                           if (window.innerWidth < 640 && (viewMode === 'default' || viewMode === 'zoomOut')) {
-                            zoomInToCard(p.id)
+                            expandCard(p.id)
                           } else {
                             setActiveCardId(p.id)
                           }
