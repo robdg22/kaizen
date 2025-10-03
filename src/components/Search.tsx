@@ -809,15 +809,8 @@ export default function Search() {
                             aria-label="Default view"
                           >
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={viewMode === 'default' ? 'text-white' : 'text-black'}>
-                              <rect x="2" y="2" width="4" height="4" fill="currentColor"/>
-                              <rect x="7" y="2" width="4" height="4" fill="currentColor"/>
-                              <rect x="12" y="2" width="2" height="4" fill="currentColor"/>
-                              <rect x="2" y="7" width="4" height="4" fill="currentColor"/>
-                              <rect x="7" y="7" width="4" height="4" fill="currentColor"/>
-                              <rect x="12" y="7" width="2" height="4" fill="currentColor"/>
-                              <rect x="2" y="12" width="4" height="2" fill="currentColor"/>
-                              <rect x="7" y="12" width="4" height="2" fill="currentColor"/>
-                              <rect x="12" y="12" width="2" height="2" fill="currentColor"/>
+                              <rect x="4" y="2" width="3" height="12" fill="currentColor"/>
+                              <rect x="9" y="2" width="3" height="12" fill="currentColor"/>
                             </svg>
                           </button>
                           
