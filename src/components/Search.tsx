@@ -61,6 +61,17 @@ export default function Search() {
   type ViewMode = 'default' | 'image-only' | 'large'
   const [viewMode, setViewMode] = useState<ViewMode>('default')
 
+  // Check URL for query parameter on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const urlQuery = params.get('q')
+    if (urlQuery) {
+      setQuery(urlQuery)
+      // Automatically perform search
+      performSearchWithQuery(urlQuery)
+    }
+  }, [])
+
   const canSearch = useMemo(() => query.trim().length > 1, [query])
 
   // Modal functions
@@ -152,8 +163,8 @@ export default function Search() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isModalOpen, selectedProductIndex])
 
-  async function performSearch() {
-    if (!canSearch) return
+  async function performSearchWithQuery(searchQuery: string) {
+    if (searchQuery.trim().length <= 1) return
     setIsLoading(true)
     setError(null)
     setHasSearched(true)
@@ -164,7 +175,7 @@ export default function Search() {
     
     // Filter to clothing products only
     const result = await TescoAPI.searchProducts({ 
-      query, 
+      query: searchQuery, 
       count: productCount, 
       page: 0, 
       filterCriteria: [{
@@ -184,6 +195,16 @@ export default function Search() {
       setProducts(items as ProductItem[])
     }
     setIsLoading(false)
+  }
+
+  async function performSearch() {
+    if (!canSearch) return
+    // Update URL with query parameter
+    const params = new URLSearchParams(window.location.search)
+    params.set('q', query)
+    window.history.pushState({}, '', `${window.location.pathname}?${params}`)
+    
+    await performSearchWithQuery(query)
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
