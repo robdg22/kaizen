@@ -975,12 +975,36 @@ export default function Search() {
                           ? 'w-1/3 sm:w-1/3 md:w-1/4 lg:w-1/6 xl:w-[14.285714%] 2xl:w-1/8'
                           : 'w-1/2 sm:w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/5 2xl:w-1/5'
                       } ${activeCardId === p.id ? 'active-card' : ''}`}
-                      onTouchStart={() => {
+                      onTouchStart={(e) => {
                         // Store which card (if any) was active when touch started
                         touchStartActiveCardRef.current = activeCardId
                         
-                        // If this card isn't already active, activate it
-                        if (activeCardId !== p.id) {
+                        // Track touch start position for scroll detection
+                        const touch = e.touches[0]
+                        const cardElement = e.currentTarget
+                        cardElement.setAttribute('data-card-touch-start-x', touch.clientX.toString())
+                        cardElement.setAttribute('data-card-touch-start-y', touch.clientY.toString())
+                        cardElement.setAttribute('data-card-is-scrolling', 'false')
+                      }}
+                      onTouchMove={(e) => {
+                        const touch = e.touches[0]
+                        const cardElement = e.currentTarget
+                        const startX = parseFloat(cardElement.getAttribute('data-card-touch-start-x') || '0')
+                        const startY = parseFloat(cardElement.getAttribute('data-card-touch-start-y') || '0')
+                        const diffX = Math.abs(touch.clientX - startX)
+                        const diffY = Math.abs(touch.clientY - startY)
+                        
+                        // If moved more than 10px (especially vertically), it's a scroll
+                        if (diffX > 10 || diffY > 10) {
+                          cardElement.setAttribute('data-card-is-scrolling', 'true')
+                        }
+                      }}
+                      onTouchEnd={(e) => {
+                        const cardElement = e.currentTarget
+                        const isScrolling = cardElement.getAttribute('data-card-is-scrolling') === 'true'
+                        
+                        // Only activate if not scrolling
+                        if (!isScrolling && activeCardId !== p.id) {
                           // On mobile (< 640px), zoom in to this card when tapping in default or zoomOut mode
                           if (window.innerWidth < 640 && (viewMode === 'default' || viewMode === 'zoomOut')) {
                             zoomInToCard(p.id)
@@ -988,15 +1012,18 @@ export default function Search() {
                             setActiveCardId(p.id)
                           }
                         }
-                      }}
-                      onTouchEnd={() => {
+                        
                         // Modal disabled - only use for card activation
                         // if (touchStartActiveCardRef.current === p.id) {
                         //   e.preventDefault() // Prevent click event
                         //   openProductModal(index)
                         // }
-                        // Reset the ref
+                        
+                        // Reset the ref and attributes
                         touchStartActiveCardRef.current = null
+                        cardElement.removeAttribute('data-card-touch-start-x')
+                        cardElement.removeAttribute('data-card-touch-start-y')
+                        cardElement.removeAttribute('data-card-is-scrolling')
                       }}
                       onClick={() => {
                         // Modal disabled
