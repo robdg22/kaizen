@@ -94,12 +94,12 @@ export default function Search() {
 
   const canSearch = useMemo(() => query.trim().length > 1, [query])
 
-  // Modal functions
-  const openProductModal = (index: number) => {
-    setSelectedProductIndex(index)
-    setIsModalOpen(true)
-    document.body.style.overflow = 'hidden' // Prevent background scroll
-  }
+  // Modal functions (disabled)
+  // const openProductModal = (index: number) => {
+  //   setSelectedProductIndex(index)
+  //   setIsModalOpen(true)
+  //   document.body.style.overflow = 'hidden' // Prevent background scroll
+  // }
 
   const closeProductModal = () => {
     setIsModalOpen(false)
@@ -871,7 +871,7 @@ export default function Search() {
                 <div className={`flex flex-wrap transition-all duration-500 ease-in-out ${
                   viewMode === 'large' ? 'gap-0' : 'gap-0'
                 }`}>
-                {products.map((p, index) => {
+                {products.map((p) => {
                   // Generate realistic rating data based on product ID
                   const productHash = p.id.split('').reduce((a, b) => a + b.charCodeAt(0), 0)
                   const rating = (3.0 + (productHash % 20) / 10).toFixed(1) // 3.0 - 5.0
@@ -904,21 +904,20 @@ export default function Search() {
                           setActiveCardId(p.id)
                         }
                       }}
-                      onTouchEnd={(e) => {
-                        // Only open modal if card was ALREADY active before this touch sequence
-                        if (touchStartActiveCardRef.current === p.id) {
-                          e.preventDefault() // Prevent click event
-                          openProductModal(index)
-                        }
+                      onTouchEnd={() => {
+                        // Modal disabled - only use for card activation
+                        // if (touchStartActiveCardRef.current === p.id) {
+                        //   e.preventDefault() // Prevent click event
+                        //   openProductModal(index)
+                        // }
                         // Reset the ref
                         touchStartActiveCardRef.current = null
                       }}
                       onClick={() => {
-                        // Mouse click: only for desktop, open modal directly
-                        // This won't fire on touch devices due to preventDefault in touchend
-                        if (activeCardId === p.id) {
-                          openProductModal(index)
-                        }
+                        // Modal disabled
+                        // if (activeCardId === p.id) {
+                        //   openProductModal(index)
+                        // }
                       }}
                       onMouseEnter={() => {
                         // Only activate on hover for mouse users
