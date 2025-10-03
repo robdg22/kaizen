@@ -167,7 +167,7 @@ export default function Search() {
       query, 
       count: productCount, 
       page: 0, 
-      filters: [{
+      filterCriteria: [{
         name: "superDepartment",
         values: ["Clothing & Accessories"]
       }]

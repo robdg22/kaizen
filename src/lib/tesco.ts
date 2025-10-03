@@ -113,24 +113,190 @@ export async function graphqlRequest<T>(
 }
 
 export const SEARCH_PRODUCTS_QUERY = `#graphql
-query SearchProducts($query: String!, $page: Int, $count: Int, $sortBy: String, $filters: [BrowseFilterType]) {
-  search(query: $query, page: $page, count: $count, sortBy: $sortBy, filters: $filters) {
-    info { total page count pageSize offset }
-    products {
-      id
-      baseProductId
-      title
-      brandName
-      shortDescription
-      defaultImageUrl
-      media {
-        defaultImage { url aspectRatio }
-        images { url aspectRatio }
-      }
-      images { display { default { url originalUrl } } default { url originalUrl } }
-      price { actual unitPrice unitOfMeasure }
-      promotions { id promotionType startDate endDate description }
+query Search(
+  $query: String!
+  $page: Int
+  $count: Int
+  $sortBy: String
+  $offset: Int
+  $filterCriteria: [filterCriteria]
+  $facet: ID
+  $superDepartment: String
+  $department: String
+  $aisle: String
+  $shelf: String
+  $offers: Boolean
+  $new: Boolean
+  $favourites: Boolean
+  $brand: String
+  $brands: [String]
+  $dietary: String
+  $dietaries: [String]
+  $params: BrowseSearchConfig
+  $startDateTime: String
+  $endDateTime: String
+  $pageName: String
+  $configs: [ConfigArgType]
+) {
+  search(
+    query: $query
+    page: $page
+    count: $count
+    sortBy: $sortBy
+    offset: $offset
+    filterCriteria: $filterCriteria
+    facet: $facet
+    superDepartment: $superDepartment
+    department: $department
+    aisle: $aisle
+    shelf: $shelf
+    offers: $offers
+    new: $new
+    favourites: $favourites
+    brand: $brand
+    brands: $brands
+    dietary: $dietary
+    dietaries: $dietaries
+    config: $params
+    configs: $configs
+  ) {
+    pageInformation: info {
+      ...PageInformation
     }
+    productItems: products {
+      ...ProductItem
+    }
+    facetLists: facetGroups {
+      ...FacetLists
+    }
+    options {
+      sortBy
+    }
+  }
+}
+
+fragment PageInformation on ListInfoInterface {
+  totalCount: total
+  pageNo: page
+  count
+  pageSize
+  offset
+}
+
+fragment ProductItem on ProductInterface {
+  id
+  baseProductId
+  title
+  brandName
+  shortDescription
+  defaultImageUrl
+  images {
+    display {
+      default {
+        url
+        originalUrl
+      }
+    }
+    default {
+      url
+      originalUrl
+    }
+  }
+  badgeDetails(pageName: $pageName) {
+    badges
+    subText
+  }
+  superDepartmentId
+  superDepartmentName
+  departmentId
+  departmentName
+  aisleId
+  aisleName
+  shelfId
+  shelfName
+  displayType
+  productType
+  averageWeight
+  bulkBuyLimit
+  maxQuantityAllowed: bulkBuyLimit
+  groupBulkBuyLimit
+  bulkBuyLimitMessage
+  bulkBuyLimitGroupId
+  timeRestrictedDelivery
+  restrictedDelivery
+  isForSale
+  isNew
+  isRestrictedOrderAmendment
+  status
+  maxWeight
+  minWeight
+  increment
+  catchWeightList {
+    price
+    weight
+    default
+  }
+  restrictedDeliveryTime {
+    day
+    startDateTime
+    endDateTime
+    message
+  }
+  restrictedDeliveryDate {
+    startDate
+    endDate
+    leadTimeValue
+    message
+  }
+  price {
+    price: actual
+    unitPrice
+    unitOfMeasure
+  }
+  promotions {
+    promotionId: id
+    promotionType
+    startDate
+    endDate
+    offerText: description
+    price {
+      beforeDiscount
+      intermediate
+      afterDiscount
+    }
+    metaData {
+      seo {
+        scheme
+        currency
+        afterDiscountPrice
+      }
+    }
+  }
+  restrictions(startDateTime: $startDateTime, endDateTime: $endDateTime) {
+    type
+    isViolated
+    message
+  }
+  reviews {
+    stats {
+      noOfReviews
+      overallRating
+      overallRatingRange
+    }
+  }
+  substitutionOptions {
+    isBlocked
+  }
+}
+
+fragment FacetLists on ProductListFacetGroupInterface {
+  categoryId
+  category
+  facets {
+    facetId: id
+    facetName: name
+    binCount: count
+    isSelected: selected
   }
 }`
 
@@ -172,7 +338,7 @@ query GetCategoryProducts($categoryId: ID, $page: Int, $count: Int, $sortBy: Str
   }
 }`
 
-export interface BrowseFilterType {
+export interface FilterCriteria {
   name: string
   values: string[]
 }
@@ -180,13 +346,13 @@ export interface BrowseFilterType {
 export class TescoAPI {
   private static proxyUrl = "https://tesco-proxy-b4fena2ys-robdgraham-gmailcoms-projects.vercel.app/api/tesco"
 
-  static async searchProducts(options: { query: string; page?: number; count?: number; sortBy?: string; filters?: BrowseFilterType[] }) {
+  static async searchProducts(options: { query: string; page?: number; count?: number; sortBy?: string; filterCriteria?: FilterCriteria[] }) {
     const variables = {
       query: options.query,
       page: options.page ?? 0,
       count: options.count ?? 20,
       sortBy: options.sortBy,
-      filters: options.filters,
+      filterCriteria: options.filterCriteria,
     }
     return graphqlRequest<SearchProductsResponse>(SEARCH_PRODUCTS_QUERY, variables, this.proxyUrl)
   }
