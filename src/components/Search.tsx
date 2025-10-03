@@ -891,17 +891,34 @@ export default function Search() {
                           ? 'w-1/4 sm:w-1/6 md:w-[calc(100%/12)]'
                           : 'w-1/3 sm:w-1/4 md:w-[calc(100%/8)]'
                       } ${activeCardId === p.id ? 'active-card' : ''}`}
-                      onClick={(e) => {
-                        // If card is already active, open modal
+                      onTouchStart={(e) => {
+                        // Touch event: activate on first tap, open on second
                         if (activeCardId === p.id) {
-                          openProductModal(index)
+                          // Already active, will open modal on touchend
                         } else {
-                          // First tap: activate the card to show overlay
+                          // First tap: activate the card
                           e.stopPropagation()
                           setActiveCardId(p.id)
                         }
                       }}
-                      onMouseEnter={() => setActiveCardId(p.id)}
+                      onTouchEnd={(e) => {
+                        // If card was already active before this touch, open modal
+                        if (activeCardId === p.id) {
+                          e.preventDefault() // Prevent click event
+                          openProductModal(index)
+                        }
+                      }}
+                      onClick={() => {
+                        // Mouse click: only for desktop, open modal directly
+                        // This won't fire on touch devices due to preventDefault in touchend
+                        if (activeCardId === p.id) {
+                          openProductModal(index)
+                        }
+                      }}
+                      onMouseEnter={() => {
+                        // Only activate on hover for mouse users
+                        setActiveCardId(p.id)
+                      }}
                       onMouseLeave={() => setActiveCardId(null)}
                       tabIndex={0}
                       onFocus={() => setActiveCardId(p.id)}
