@@ -885,11 +885,22 @@ export default function Search() {
                           }`}>
                             {(() => {
                               const { url } = getImageUrl(p)
+                              // Get second image if available
+                              const secondImage = p.media?.images?.[1]?.url || p.media?.images?.[0]?.url || url
+                              
                               return (
                                 <>
+                                  {/* First image - default */}
                                   <img
                                     src={url}
-                                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-200 ease-out group-hover:scale-110"
+                                    className="absolute inset-0 w-full h-full object-cover transition-all duration-300 ease-out group-hover:opacity-0"
+                                    alt={p.title}
+                                  />
+                                  
+                                  {/* Second image - shown on hover */}
+                                  <img
+                                    src={secondImage}
+                                    className="absolute inset-0 w-full h-full object-cover transition-all duration-300 ease-out opacity-0 group-hover:opacity-100 group-hover:scale-110"
                                     alt={p.title}
                                   />
                                   
