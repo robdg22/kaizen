@@ -56,6 +56,10 @@ export default function Search() {
   // Touch handling for swipe navigation
   const [touchStart, setTouchStart] = useState<number | null>(null)
   const [touchEnd, setTouchEnd] = useState<number | null>(null)
+  
+  // Thumbnail view mode for clothing products
+  type ViewMode = 'default' | 'image-only' | 'large'
+  const [viewMode, setViewMode] = useState<ViewMode>('default')
 
   const canSearch = useMemo(() => query.trim().length > 1, [query])
 
@@ -180,69 +184,32 @@ export default function Search() {
 
   // Skeleton card component
   const SkeletonCard = () => (
-    <div className="bg-white relative">
-      {/* Wishlist Button Skeleton */}
-      <div className="absolute top-3 right-3 z-10">
-        <Skeleton width={36} height={36} circle />
+    <div className="bg-white relative transition-all duration-500 ease-in-out">
+      {/* Image skeleton - 4:5 aspect ratio for clothing */}
+      <div className="w-full aspect-[4/5] relative overflow-hidden">
+        <Skeleton height="100%" />
       </div>
-      
-      <div className="pt-4 px-4 pb-12">
-        {/* Top Container */}
-        <div className="flex flex-col gap-3 mb-3">
-          {/* Tag skeleton */}
-          <div className="flex gap-1 items-start">
-            <Skeleton width={40} height={24} />
-          </div>
 
-          {/* Image skeleton */}
-          <div className="flex items-center justify-center w-full">
-            <Skeleton width={135} height={135} />
-          </div>
-
+      {/* Content - Hidden in image-only mode */}
+      {viewMode !== 'image-only' && (
+        <div className={`px-4 pb-4 pt-3 space-y-3 transition-all duration-500 ease-in-out ${
+          viewMode === 'large' ? 'px-6 pb-6 pt-4 space-y-4' : ''
+        }`}>
           {/* Title skeleton */}
           <div className="flex flex-col gap-1">
-            <Skeleton width={60} height={16} />
-            <Skeleton width="80%" height={20} />
-          </div>
-
-          {/* Rating skeleton */}
-          <div className="flex gap-2 items-center">
-            <div className="flex gap-1">
-              {[1,2,3,4,5].map((star) => (
-                <Skeleton key={star} width={12} height={12} />
-              ))}
-            </div>
-            <Skeleton width={80} height={18} />
-          </div>
-
-          {/* Links skeleton */}
-          <div className="flex flex-col gap-1">
-            <Skeleton width={100} height={18} />
-            <Skeleton width={90} height={18} />
-          </div>
-        </div>
-
-        {/* Bottom Container */}
-        <div className="pt-3 flex flex-col gap-3">
-          {/* Value bar skeleton */}
-          <div className="flex flex-col gap-2">
-            <Skeleton height={56} />
-            <Skeleton width="60%" height={16} />
+            <Skeleton width="80%" height={18} />
           </div>
 
           {/* Price and add button skeleton */}
-          <div className="flex flex-col gap-3">
+          <div className="space-y-3">
             <div className="flex items-baseline gap-2">
-              <Skeleton width={80} height={28} />
-              <Skeleton width={60} height={18} />
+              <Skeleton width={80} height={20} />
+              <Skeleton width={60} height={16} />
             </div>
-            <div className="flex gap-3 items-start">
-              <Skeleton width={68} height={40} />
-              <Skeleton width={92} height={40} />
-            </div>
+            <Skeleton height={40} />
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 
@@ -782,9 +749,17 @@ export default function Search() {
               )}
 
               {isLoading && (
-                <div className="flex flex-wrap gap-2 px-2">
+                <div className={`flex flex-wrap px-2 transition-all duration-500 ease-in-out ${
+                  viewMode === 'large' ? 'gap-6' : 'gap-2'
+                }`}>
                   {Array.from({ length: 40 }).map((_, i) => (
-                    <div key={i} className="w-[calc(50%-4px)] sm:w-[188px] max-w-[188px]">
+                    <div key={i} className={`transition-all duration-500 ease-in-out ${
+                      viewMode === 'large' 
+                        ? 'w-[calc(50%-12px)] sm:w-[376px] max-w-[376px]' 
+                        : viewMode === 'image-only'
+                        ? 'w-[calc(33.333%-5.33px)] sm:w-[125px] max-w-[125px]'
+                        : 'w-[calc(50%-4px)] sm:w-[188px] max-w-[188px]'
+                    }`}>
                       <SkeletonCard />
                     </div>
                   ))}
@@ -796,7 +771,74 @@ export default function Search() {
               )}
 
               {!isLoading && products.length > 0 && (
-              <div className="flex flex-wrap gap-2 px-2">
+              <>
+                {/* View Mode Toggle for Clothing Products */}
+                {(() => {
+                  const hasFFProducts = products.some(p => 
+                    p.brandName?.toLowerCase().includes('f&f') || 
+                    p.brandName?.toLowerCase().includes('florence') ||
+                    p.title?.toLowerCase().includes('f&f') ||
+                    p.title?.toLowerCase().includes('florence')
+                  )
+                  
+                  if (!hasFFProducts) return null
+                  
+                  return (
+                    <div className="mb-6 px-2">
+                      <div className="flex items-center gap-2 bg-white rounded-lg p-1 shadow-sm border w-fit">
+                        <button
+                          onClick={() => setViewMode('default')}
+                          className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                            viewMode === 'default' 
+                              ? 'bg-black text-white shadow-sm' 
+                              : 'text-gray-600 hover:text-black hover:bg-gray-100'
+                          }`}
+                        >
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="inline mr-1">
+                            <rect x="2" y="2" width="12" height="8" rx="1" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+                            <rect x="2" y="11" width="12" height="1" rx="0.5" fill="currentColor"/>
+                            <rect x="2" y="13" width="8" height="1" rx="0.5" fill="currentColor"/>
+                          </svg>
+                          Default
+                        </button>
+                        <button
+                          onClick={() => setViewMode('image-only')}
+                          className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                            viewMode === 'image-only' 
+                              ? 'bg-black text-white shadow-sm' 
+                              : 'text-gray-600 hover:text-black hover:bg-gray-100'
+                          }`}
+                        >
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="inline mr-1">
+                            <rect x="2" y="2" width="12" height="12" rx="1" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+                            <circle cx="6" cy="6" r="1.5" fill="currentColor"/>
+                            <path d="M14 10l-3-3-2 2-3-3-4 4v3h12v-3z" fill="currentColor"/>
+                          </svg>
+                          Image
+                        </button>
+                        <button
+                          onClick={() => setViewMode('large')}
+                          className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                            viewMode === 'large' 
+                              ? 'bg-black text-white shadow-sm' 
+                              : 'text-gray-600 hover:text-black hover:bg-gray-100'
+                          }`}
+                        >
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="inline mr-1">
+                            <rect x="1" y="1" width="14" height="10" rx="1" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+                            <rect x="1" y="12" width="14" height="1" rx="0.5" fill="currentColor"/>
+                            <rect x="1" y="14" width="10" height="1" rx="0.5" fill="currentColor"/>
+                          </svg>
+                          Large
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })()}
+                
+                <div className={`flex flex-wrap px-2 transition-all duration-500 ease-in-out ${
+                  viewMode === 'large' ? 'gap-6' : 'gap-2'
+                }`}>
                 {products.map((p, index) => {
                   // Generate realistic rating data based on product ID
                   const productHash = p.id.split('').reduce((a, b) => a + b.charCodeAt(0), 0)
@@ -813,14 +855,22 @@ export default function Search() {
                   return (
                     <div 
                       key={p.id} 
-                      className="bg-white relative w-[calc(50%-4px)] sm:w-[188px] max-w-[188px] cursor-pointer hover:shadow-lg transition-shadow duration-200"
+                      className={`bg-white relative cursor-pointer hover:shadow-lg transition-all duration-500 ease-in-out ${
+                        viewMode === 'large' 
+                          ? 'w-[calc(50%-12px)] sm:w-[376px] max-w-[376px]' 
+                          : viewMode === 'image-only'
+                          ? 'w-[calc(33.333%-5.33px)] sm:w-[125px] max-w-[125px]'
+                          : 'w-[calc(50%-4px)] sm:w-[188px] max-w-[188px]'
+                      }`}
                       onClick={() => openProductModal(index)}
                     >
                       {isFFProduct ? (
                         // F&F (Clothing) Card Design
                         <>
                           {/* Image Container - 4:5 aspect ratio */}
-                          <div className="w-full aspect-[4/5] relative overflow-hidden group">
+                          <div className={`w-full aspect-[4/5] relative overflow-hidden group transition-all duration-500 ease-in-out ${
+                            viewMode === 'large' ? 'aspect-[4/5]' : 'aspect-[4/5]'
+                          }`}>
                             {(() => {
                               const { url } = getImageUrl(p)
                               return (
@@ -833,8 +883,11 @@ export default function Search() {
                             })()}
                           </div>
 
-                          {/* Content */}
-                          <div className="px-4 pb-4 pt-3 space-y-3">
+                          {/* Content - Hidden in image-only mode */}
+                          {viewMode !== 'image-only' && (
+                            <div className={`px-4 pb-4 pt-3 space-y-3 transition-all duration-500 ease-in-out ${
+                              viewMode === 'large' ? 'px-6 pb-6 pt-4 space-y-4' : ''
+                            }`}>
                             {/* Title */}
                             <h3 className="text-sm font-bold text-black leading-[18px] w-full">
                               {p.title}
@@ -868,7 +921,8 @@ export default function Search() {
                                 <div className="absolute inset-[-4px] rounded-full border-[3px] border-black border-solid pointer-events-none opacity-0 group-focus-visible:opacity-100 transition-opacity"></div>
                               </button>
                             </div>
-                          </div>
+                            </div>
+                          )}
                         </>
                       ) : (
                         // Regular Product Card Design
@@ -1046,15 +1100,16 @@ export default function Search() {
               )
                 })}
               </div>
+              </>
             )}
                   </div>
                 )
-        })()}
-      </div>
+              })()}
+            </div>
       
       {/* Product Modal */}
       {isModalOpen && <ProductModal />}
-    </div>
+      </div>
   )
 }
 
