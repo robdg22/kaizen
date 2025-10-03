@@ -161,7 +161,19 @@ export default function Search() {
     
     // Always load 40 products regardless of viewport
     const productCount = 40
-    const result = await TescoAPI.searchProducts({ query, count: productCount, page: 0, filters: [] })
+    
+    // Filter to clothing products only (passed as JSON string to match API type)
+    const clothingFilter = JSON.stringify({
+      name: "superDepartment",
+      values: ["Clothing & Accessories"]
+    })
+    
+    const result = await TescoAPI.searchProducts({ 
+      query, 
+      count: productCount, 
+      page: 0, 
+      filters: [clothingFilter] 
+    })
     if (result.errors) {
       setError(result.errors[0]?.message ?? 'Unknown error')
       setProducts([])
@@ -527,12 +539,8 @@ export default function Search() {
         {/* Mobile Header */}
         <div className="xs:hidden">
           {(() => {
-            const isFFTheme = hasSearched && products.some(p => 
-              p.brandName?.toLowerCase().includes('f&f') || 
-              p.brandName?.toLowerCase().includes('florence') ||
-              p.title?.toLowerCase().includes('f&f') ||
-              p.title?.toLowerCase().includes('florence')
-            )
+            // Always use F&F theme for clothing-only branch
+            const isFFTheme = true
             return (
           <div className={`bg-white border-t-4 ${isFFTheme ? 'border-black' : 'border-[#003adc]'}`}>
             {/* Logo & Basket Row */}
@@ -636,12 +644,8 @@ export default function Search() {
         {/* Wide Header (450px+) */}
         <div className="hidden xs:block">
           {(() => {
-            const isFFTheme = hasSearched && products.some(p => 
-              p.brandName?.toLowerCase().includes('f&f') || 
-              p.brandName?.toLowerCase().includes('florence') ||
-              p.title?.toLowerCase().includes('f&f') ||
-              p.title?.toLowerCase().includes('florence')
-            )
+            // Always use F&F theme for clothing-only branch
+            const isFFTheme = true
             return (
           <div className="bg-white">
             {/* Blue utility bar */}
@@ -774,15 +778,7 @@ export default function Search() {
               <>
                 {/* View Mode Toggle for Clothing Products */}
                 {(() => {
-                  const hasFFProducts = products.some(p => 
-                    p.brandName?.toLowerCase().includes('f&f') || 
-                    p.brandName?.toLowerCase().includes('florence') ||
-                    p.title?.toLowerCase().includes('f&f') ||
-                    p.title?.toLowerCase().includes('florence')
-                  )
-                  
-                  if (!hasFFProducts) return null
-                  
+                  // Always show toggle for clothing-only branch
                   return (
                     <div className="mb-6 px-2">
                       <div className="flex items-center gap-2 bg-white rounded-lg p-1 shadow-sm border w-fit">
