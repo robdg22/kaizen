@@ -67,8 +67,6 @@ export default function Search() {
   const touchStartActiveCardRef = useRef<string | null>(null)
   // Track currently displayed image index for each card
   const [cardImageIndex, setCardImageIndex] = useState<Record<string, number>>({})
-  // Track image cycling intervals
-  const imageIntervalRefs = useRef<Record<string, number>>({})
   // Track which cards have preloaded their images
   const preloadedImagesRef = useRef<Set<string>>(new Set())
   // Track transitioning state for blur effect
@@ -252,47 +250,31 @@ export default function Search() {
     preloadedImagesRef.current.add(productId)
   }
 
-  // Start cycling images for a card
-  const startImageCycling = (productId: string, imageCount: number) => {
-    // Clear any existing interval
-    if (imageIntervalRefs.current[productId]) {
-      clearInterval(imageIntervalRefs.current[productId])
-    }
-
-    if (imageCount <= 1) return
-
-    // Cycle to next image every 150ms with transition
-    imageIntervalRefs.current[productId] = setInterval(() => {
-      // Trigger blur transition
-      setTransitioningCards(prev => new Set(prev).add(productId))
+  // Change image with transition effect
+  const changeImageWithTransition = (productId: string, imageIndex: number) => {
+    // Trigger blur transition
+    setTransitioningCards(prev => new Set(prev).add(productId))
+    
+    // Change image after brief delay for blur effect
+    setTimeout(() => {
+      setCardImageIndex(prev => ({
+        ...prev,
+        [productId]: imageIndex
+      }))
       
-      // Change image after brief delay for blur effect
+      // Remove blur after image changes
       setTimeout(() => {
-        setCardImageIndex(prev => ({
-          ...prev,
-          [productId]: ((prev[productId] || 0) + 1) % imageCount
-        }))
-        
-        // Remove blur after image changes
-        setTimeout(() => {
-          setTransitioningCards(prev => {
-            const newSet = new Set(prev)
-            newSet.delete(productId)
-            return newSet
-          })
-        }, 75) // Half of 150ms for crossfade
-      }, 75)
-    }, 150)
+        setTransitioningCards(prev => {
+          const newSet = new Set(prev)
+          newSet.delete(productId)
+          return newSet
+        })
+      }, 75) // Half of 150ms for crossfade
+    }, 75)
   }
 
-  // Stop cycling and reset to first image
-  const stopImageCycling = (productId: string) => {
-    if (imageIntervalRefs.current[productId]) {
-      clearInterval(imageIntervalRefs.current[productId])
-      delete imageIntervalRefs.current[productId]
-    }
-    
-    // Reset to first image
+  // Reset to first image
+  const resetToFirstImage = (productId: string) => {
     setCardImageIndex(prev => ({ ...prev, [productId]: 0 }))
     setTransitioningCards(prev => {
       const newSet = new Set(prev)
@@ -300,13 +282,6 @@ export default function Search() {
       return newSet
     })
   }
-
-  // Cleanup intervals on unmount
-  useEffect(() => {
-    return () => {
-      Object.values(imageIntervalRefs.current).forEach(interval => clearInterval(interval))
-    }
-  }, [])
 
   // Skeleton card component
   const SkeletonCard = () => (
@@ -1003,16 +978,15 @@ export default function Search() {
                         // Only activate on hover for mouse users
                         setActiveCardId(p.id)
                         
-                        // Preload and start cycling images
+                        // Preload images on first hover
                         const images = p.media?.images || []
                         if (images.length > 0) {
                           preloadProductImages(p.id, images)
-                          startImageCycling(p.id, images.length)
                         }
                       }}
                       onMouseLeave={() => {
                         setActiveCardId(null)
-                        stopImageCycling(p.id)
+                        resetToFirstImage(p.id)
                       }}
                       tabIndex={0}
                       onFocus={() => setActiveCardId(p.id)}
@@ -1123,11 +1097,11 @@ export default function Search() {
                                               }`}
                                               onMouseEnter={(e) => {
                                                 e.stopPropagation()
-                                                setCardImageIndex(prev => ({ ...prev, [p.id]: imgIndex }))
+                                                changeImageWithTransition(p.id, imgIndex)
                                               }}
                                               onClick={(e) => {
                                                 e.stopPropagation()
-                                                setCardImageIndex(prev => ({ ...prev, [p.id]: imgIndex }))
+                                                changeImageWithTransition(p.id, imgIndex)
                                               }}
                                             >
                                               <img
