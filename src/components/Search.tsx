@@ -779,52 +779,66 @@ export default function Search() {
                   // Always show toggle for clothing-only branch
                   return (
                     <div className="mb-6 px-2">
-                      <div className="flex items-center gap-2 bg-white rounded-lg p-1 shadow-sm border w-fit">
-                        <button
-                          onClick={() => setViewMode('default')}
-                          className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                            viewMode === 'default' 
-                              ? 'bg-black text-white shadow-sm' 
-                              : 'text-gray-600 hover:text-black hover:bg-gray-100'
-                          }`}
-                        >
-                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="inline mr-1">
-                            <rect x="2" y="2" width="12" height="8" rx="1" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-                            <rect x="2" y="11" width="12" height="1" rx="0.5" fill="currentColor"/>
-                            <rect x="2" y="13" width="8" height="1" rx="0.5" fill="currentColor"/>
-                          </svg>
-                          Default
-                        </button>
-                        <button
-                          onClick={() => setViewMode('image-only')}
-                          className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                            viewMode === 'image-only' 
-                              ? 'bg-black text-white shadow-sm' 
-                              : 'text-gray-600 hover:text-black hover:bg-gray-100'
-                          }`}
-                        >
-                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="inline mr-1">
-                            <rect x="2" y="2" width="12" height="12" rx="1" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-                            <circle cx="6" cy="6" r="1.5" fill="currentColor"/>
-                            <path d="M14 10l-3-3-2 2-3-3-4 4v3h12v-3z" fill="currentColor"/>
-                          </svg>
-                          Image
-                        </button>
-                        <button
-                          onClick={() => setViewMode('large')}
-                          className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                            viewMode === 'large' 
-                              ? 'bg-black text-white shadow-sm' 
-                              : 'text-gray-600 hover:text-black hover:bg-gray-100'
-                          }`}
-                        >
-                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="inline mr-1">
-                            <rect x="1" y="1" width="14" height="10" rx="1" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-                            <rect x="1" y="12" width="14" height="1" rx="0.5" fill="currentColor"/>
-                            <rect x="1" y="14" width="10" height="1" rx="0.5" fill="currentColor"/>
-                          </svg>
-                          Large
-                        </button>
+                      <div className="relative bg-white w-[85px] h-[28px]">
+                        {/* Black background indicator */}
+                        <div 
+                          className="absolute bg-black h-[24px] top-[2px] w-[27px] transition-all duration-200"
+                          style={{
+                            left: viewMode === 'large' ? '2px' : viewMode === 'default' ? '29px' : '56px'
+                          }}
+                        />
+                        
+                        {/* Button container */}
+                        <div className="absolute h-[24px] left-[2px] top-[2px] w-[81px] flex">
+                          {/* Large view button */}
+                          <button
+                            onClick={() => setViewMode('large')}
+                            className="flex items-center justify-center w-[27px] h-[24px] p-[6px] cursor-pointer relative z-10"
+                            aria-label="Large view"
+                          >
+                            <div className={`border-[1.5px] border-solid w-[16px] h-[16px] transition-colors ${
+                              viewMode === 'large' ? 'border-white' : 'border-black'
+                            }`} />
+                          </button>
+                          
+                          {/* Default view button */}
+                          <button
+                            onClick={() => setViewMode('default')}
+                            className="flex items-center justify-center w-[27px] h-[24px] p-[6px] cursor-pointer relative z-10"
+                            aria-label="Default view"
+                          >
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={viewMode === 'default' ? 'text-white' : 'text-black'}>
+                              <rect x="2" y="2" width="4" height="4" fill="currentColor"/>
+                              <rect x="7" y="2" width="4" height="4" fill="currentColor"/>
+                              <rect x="12" y="2" width="2" height="4" fill="currentColor"/>
+                              <rect x="2" y="7" width="4" height="4" fill="currentColor"/>
+                              <rect x="7" y="7" width="4" height="4" fill="currentColor"/>
+                              <rect x="12" y="7" width="2" height="4" fill="currentColor"/>
+                              <rect x="2" y="12" width="4" height="2" fill="currentColor"/>
+                              <rect x="7" y="12" width="4" height="2" fill="currentColor"/>
+                              <rect x="12" y="12" width="2" height="2" fill="currentColor"/>
+                            </svg>
+                          </button>
+                          
+                          {/* Small/Image-only view button */}
+                          <button
+                            onClick={() => setViewMode('image-only')}
+                            className="flex items-center justify-center w-[27px] h-[24px] p-[6px] cursor-pointer relative z-10"
+                            aria-label="Image only view"
+                          >
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={viewMode === 'image-only' ? 'text-white' : 'text-black'}>
+                              <rect x="1" y="1" width="4" height="4" fill="currentColor"/>
+                              <rect x="6" y="1" width="4" height="4" fill="currentColor"/>
+                              <rect x="11" y="1" width="4" height="4" fill="currentColor"/>
+                              <rect x="1" y="6" width="4" height="4" fill="currentColor"/>
+                              <rect x="6" y="6" width="4" height="4" fill="currentColor"/>
+                              <rect x="11" y="6" width="4" height="4" fill="currentColor"/>
+                              <rect x="1" y="11" width="4" height="4" fill="currentColor"/>
+                              <rect x="6" y="11" width="4" height="4" fill="currentColor"/>
+                              <rect x="11" y="11" width="4" height="4" fill="currentColor"/>
+                            </svg>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )
