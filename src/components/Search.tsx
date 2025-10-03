@@ -290,20 +290,26 @@ export default function Search() {
     setViewMode('zoomIn')
     setActiveCardId(productId)
     
-    // Wait for layout to update, then scroll to card
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        const cardElement = cardRefs.current[productId]
-        if (cardElement) {
-          // Scroll card into view smoothly, centered
-          cardElement.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'center',
-            inline: 'nearest'
-          })
-        }
-      })
-    })
+    // Wait longer for the grid transition to complete
+    setTimeout(() => {
+      const cardElement = cardRefs.current[productId]
+      if (cardElement) {
+        // Get the card's position
+        const cardRect = cardElement.getBoundingClientRect()
+        const absoluteTop = window.pageYOffset + cardRect.top
+        
+        // Calculate offset to center the card (accounting for header)
+        const headerHeight = 124 // Fixed header height
+        const viewportCenter = window.innerHeight / 2
+        const scrollTo = absoluteTop - viewportCenter + (cardRect.height / 2) + headerHeight
+        
+        // Smooth scroll to position
+        window.scrollTo({
+          top: Math.max(0, scrollTo),
+          behavior: 'smooth'
+        })
+      }
+    }, 600) // Wait for transition duration (500ms) + buffer
   }
 
   // Skeleton card component
