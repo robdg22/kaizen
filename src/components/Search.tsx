@@ -748,8 +748,8 @@ export default function Search() {
                       viewMode === 'large' 
                         ? 'w-1/2 sm:w-1/4 flex-grow' 
                         : viewMode === 'image-only'
-                        ? 'w-1/3 sm:w-[125px]'
-                        : 'w-1/2 sm:w-[188px]'
+                        ? 'w-1/4 sm:w-1/6 md:w-[calc(100%/12)]'
+                        : 'w-1/3 sm:w-1/4 md:w-[calc(100%/8)]'
                     }`}>
                       <SkeletonCard />
                     </div>
@@ -850,8 +850,8 @@ export default function Search() {
                         viewMode === 'large' 
                           ? 'w-1/2 sm:w-1/4 flex-grow' 
                           : viewMode === 'image-only'
-                          ? 'w-1/3 sm:w-[125px]'
-                          : 'w-1/2 sm:w-[188px]'
+                          ? 'w-1/4 sm:w-1/6 md:w-[calc(100%/12)]'
+                          : 'w-1/3 sm:w-1/4 md:w-[calc(100%/8)]'
                       }`}
                       onClick={() => openProductModal(index)}
                     >
