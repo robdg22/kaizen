@@ -190,6 +190,16 @@ fragment ProductItem on ProductInterface {
   brandName
   shortDescription
   defaultImageUrl
+  media {
+    defaultImage {
+      url
+      aspectRatio
+    }
+    images {
+      url
+      aspectRatio
+    }
+  }
   images {
     display {
       default {

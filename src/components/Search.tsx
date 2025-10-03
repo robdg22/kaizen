@@ -331,7 +331,7 @@ export default function Search() {
           <div className="flex-1 flex flex-col md:flex-row">
             {/* Large Image */}
             <div className="w-full md:w-1/2 p-4 md:p-6 bg-gray-50 flex items-center justify-center">
-              <div className="relative w-full max-w-sm md:max-w-md aspect-square">
+              <div className={`relative w-full max-w-sm md:max-w-md ${isFFProduct ? 'aspect-[4/5]' : 'aspect-square'}`}>
                 <img 
                   src={currentImageUrl}
                   alt={currentProduct.title}
