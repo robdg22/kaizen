@@ -291,6 +291,26 @@ export default function Search() {
   const expandCard = (productId: string) => {
     setExpandedCardId(productId)
     setActiveCardId(productId)
+    
+    // Wait for the card to expand, then scroll to center it
+    setTimeout(() => {
+      const cardElement = cardRefs.current[productId]
+      if (cardElement) {
+        const rect = cardElement.getBoundingClientRect()
+        const absoluteTop = window.pageYOffset + rect.top
+        const cardHeight = rect.height
+        const viewportHeight = window.innerHeight
+        
+        // Calculate scroll position to center the card
+        // Center of viewport minus half card height
+        const targetScroll = absoluteTop - (viewportHeight / 2) + (cardHeight / 2)
+        
+        window.scrollTo({
+          top: Math.max(0, targetScroll),
+          behavior: 'smooth'
+        })
+      }
+    }, 550) // Wait for expansion transition to complete
   }
 
   // Close expanded card when clicking outside
