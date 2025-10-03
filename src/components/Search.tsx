@@ -740,16 +740,16 @@ export default function Search() {
               )}
 
               {isLoading && (
-                <div className={`flex flex-wrap px-2 transition-all duration-500 ease-in-out ${
-                  viewMode === 'large' ? 'gap-6' : 'gap-2'
+                <div className={`flex flex-wrap transition-all duration-500 ease-in-out ${
+                  viewMode === 'large' ? 'gap-0' : 'gap-0'
                 }`}>
                   {Array.from({ length: 40 }).map((_, i) => (
                     <div key={i} className={`transition-all duration-500 ease-in-out ${
                       viewMode === 'large' 
-                        ? 'w-[calc(50%-12px)] sm:w-[calc(25%-18px)] flex-grow max-w-[500px]' 
+                        ? 'w-1/2 sm:w-1/4 flex-grow' 
                         : viewMode === 'image-only'
-                        ? 'w-[calc(33.333%-5.33px)] sm:w-[125px] max-w-[125px]'
-                        : 'w-[calc(50%-4px)] sm:w-[188px] max-w-[188px]'
+                        ? 'w-1/3 sm:w-[125px]'
+                        : 'w-1/2 sm:w-[188px]'
                     }`}>
                       <SkeletonCard />
                     </div>
@@ -827,8 +827,8 @@ export default function Search() {
                   )
                 })()}
                 
-                <div className={`flex flex-wrap px-2 transition-all duration-500 ease-in-out ${
-                  viewMode === 'large' ? 'gap-6' : 'gap-2'
+                <div className={`flex flex-wrap transition-all duration-500 ease-in-out ${
+                  viewMode === 'large' ? 'gap-0' : 'gap-0'
                 }`}>
                 {products.map((p, index) => {
                   // Generate realistic rating data based on product ID
@@ -848,10 +848,10 @@ export default function Search() {
                       key={p.id} 
                       className={`bg-white relative cursor-pointer hover:shadow-lg transition-all duration-500 ease-in-out ${
                         viewMode === 'large' 
-                          ? 'w-[calc(50%-12px)] sm:w-[calc(25%-18px)] flex-grow max-w-[500px]' 
+                          ? 'w-1/2 sm:w-1/4 flex-grow' 
                           : viewMode === 'image-only'
-                          ? 'w-[calc(33.333%-5.33px)] sm:w-[125px] max-w-[125px]'
-                          : 'w-[calc(50%-4px)] sm:w-[188px] max-w-[188px]'
+                          ? 'w-1/3 sm:w-[125px]'
+                          : 'w-1/2 sm:w-[188px]'
                       }`}
                       onClick={() => openProductModal(index)}
                     >
