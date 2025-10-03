@@ -785,12 +785,12 @@ export default function Search() {
                   viewMode === 'large' ? 'gap-0' : 'gap-0'
                 }`}>
                   {Array.from({ length: 40 }).map((_, i) => (
-                    <div key={i} className={`transition-all duration-500 ease-in-out ${
+                    <div key={i} className={`transition-all duration-500 ease-[cubic-bezier(0.77,0,0.18,1)] ${
                       viewMode === 'large' 
-                        ? 'w-full sm:w-1/2 md:w-1/4' 
+                        ? 'w-full xs:w-1/2 sm:w-1/3 md:w-1/4' 
                         : viewMode === 'image-only'
-                        ? 'w-1/4 sm:w-1/6 md:w-[calc(100%/12)]'
-                        : 'w-1/3 sm:w-1/4 md:w-[calc(100%/8)]'
+                        ? 'w-1/3 xs:w-1/4 sm:w-1/5 md:w-1/6'
+                        : 'w-1/2 xs:w-1/3 sm:w-1/4 md:w-1/5'
                     }`}>
                       <SkeletonCard />
                     </div>
@@ -888,12 +888,12 @@ export default function Search() {
                     <div 
                       key={p.id}
                       data-product-card
-                      className={`bg-white relative cursor-pointer hover:shadow-lg transition-all duration-500 ease-in-out ${
+                      className={`bg-white relative cursor-pointer hover:shadow-lg transition-all duration-500 ease-[cubic-bezier(0.77,0,0.18,1)] ${
                         viewMode === 'large' 
-                          ? 'w-full sm:w-1/2 md:w-1/4' 
+                          ? 'w-full xs:w-1/2 sm:w-1/3 md:w-1/4' 
                           : viewMode === 'image-only'
-                          ? 'w-1/4 sm:w-1/6 md:w-[calc(100%/12)]'
-                          : 'w-1/3 sm:w-1/4 md:w-[calc(100%/8)]'
+                          ? 'w-1/3 xs:w-1/4 sm:w-1/5 md:w-1/6'
+                          : 'w-1/2 xs:w-1/3 sm:w-1/4 md:w-1/5'
                       } ${activeCardId === p.id ? 'active-card' : ''}`}
                       onTouchStart={() => {
                         // Store which card (if any) was active when touch started
@@ -902,6 +902,11 @@ export default function Search() {
                         // If this card isn't already active, activate it
                         if (activeCardId !== p.id) {
                           setActiveCardId(p.id)
+                          
+                          // On mobile (< 375px), switch to large view when tapping card in default or image-only mode
+                          if (window.innerWidth < 375 && (viewMode === 'default' || viewMode === 'image-only')) {
+                            setViewMode('large')
+                          }
                         }
                       }}
                       onTouchEnd={() => {
