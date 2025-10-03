@@ -199,27 +199,6 @@ export default function Search() {
       <div className="w-full aspect-[4/5] relative overflow-hidden">
         <Skeleton height="100%" />
       </div>
-
-      {/* Content - Hidden in image-only mode */}
-      {viewMode !== 'image-only' && (
-        <div className={`px-4 pb-4 pt-3 space-y-3 transition-all duration-500 ease-in-out ${
-          viewMode === 'large' ? 'px-6 pb-6 pt-4 space-y-4' : ''
-        }`}>
-          {/* Title skeleton */}
-          <div className="flex flex-col gap-1">
-            <Skeleton width="80%" height={18} />
-          </div>
-
-          {/* Price and add button skeleton */}
-          <div className="space-y-3">
-            <div className="flex items-baseline gap-2">
-              <Skeleton width={80} height={20} />
-              <Skeleton width={60} height={16} />
-            </div>
-            <Skeleton height={40} />
-          </div>
-        </div>
-      )}
     </div>
   )
 
@@ -869,62 +848,45 @@ export default function Search() {
                       {isFFProduct ? (
                         // F&F (Clothing) Card Design
                         <>
-                          {/* Image Container - 4:5 aspect ratio */}
+                          {/* Image Container - 4:5 aspect ratio with hover/tap overlay */}
                           <div className={`w-full aspect-[4/5] relative overflow-hidden group transition-all duration-500 ease-in-out ${
                             viewMode === 'large' ? 'aspect-[4/5]' : 'aspect-[4/5]'
                           }`}>
                             {(() => {
                               const { url } = getImageUrl(p)
                               return (
-                                <img
-                                  src={url}
-                                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-200 ease-out group-hover:scale-110"
-                                  alt={p.title}
-                                />
+                                <>
+                                  <img
+                                    src={url}
+                                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-200 ease-out group-hover:scale-110"
+                                    alt={p.title}
+                                  />
+                                  
+                                  {/* Info overlay - shown on hover/tap, hidden in image-only mode */}
+                                  {viewMode !== 'image-only' && (
+                                    <div className="absolute bottom-0 left-0 right-0 bg-white px-4 py-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                                      {/* Title */}
+                                      <h3 className="text-sm font-bold text-black leading-[18px] mb-2 line-clamp-2">
+                                        {p.title}
+                                      </h3>
+                                      
+                                      {/* Price */}
+                                      <div className="flex items-baseline gap-2">
+                                        <span className="text-base font-bold text-black leading-5">
+                                          £{(p.price?.actual ?? p.price?.price ?? 0).toFixed(2)}
+                                        </span>
+                                        {p.price?.price && p.price?.price !== p.price?.actual && (
+                                          <span className="text-sm text-gray-500 line-through">
+                                            £{p.price?.price.toFixed(2)}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                </>
                               )
                             })()}
                           </div>
-
-                          {/* Content - Hidden in image-only mode */}
-                          {viewMode !== 'image-only' && (
-                            <div className={`px-4 pb-4 pt-3 space-y-3 transition-all duration-500 ease-in-out ${
-                              viewMode === 'large' ? 'px-6 pb-6 pt-4 space-y-4' : ''
-                            }`}>
-                            {/* Title */}
-                            <h3 className="text-sm font-bold text-black leading-[18px] w-full">
-                              {p.title}
-                            </h3>
-
-                            {/* Price and Add to Basket */}
-                            <div className="space-y-3">
-                              <div className="flex items-baseline gap-2">
-                                <span className="text-base font-bold text-black leading-5">
-                                  £{(p.price?.actual ?? p.price?.price ?? 0).toFixed(2)}
-                                </span>
-                                {p.price?.price && p.price?.price !== p.price?.actual && (
-                                  <span className="text-sm text-gray-500 line-through">
-                                    £{p.price?.price.toFixed(2)}
-                                  </span>
-                                )}
-                              </div>
-
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation() // Prevent modal from opening
-                                  const unit = (p.price?.actual ?? p.price?.price ?? 1.00)
-                                  setBasketCount(prev => prev + 1)
-                                  setBasketTotal(prev => Number((prev + unit).toFixed(2)))
-                                  setIsHeaderVisible(true)
-                                }}
-                                className="bg-black px-5 py-2 rounded-full w-full h-10 flex items-center justify-center relative focus:outline-none focus-visible:outline-none group hover:scale-105 active:scale-90 transition-transform duration-150 ease-out"
-                              >
-                                <span className="text-base font-bold text-white leading-5">Add</span>
-                                {/* Focus ring - only visible for keyboard focus */}
-                                <div className="absolute inset-[-4px] rounded-full border-[3px] border-black border-solid pointer-events-none opacity-0 group-focus-visible:opacity-100 transition-opacity"></div>
-                              </button>
-                            </div>
-                            </div>
-                          )}
                         </>
                       ) : (
                         // Regular Product Card Design
