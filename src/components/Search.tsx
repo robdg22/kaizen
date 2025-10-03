@@ -839,8 +839,8 @@ export default function Search() {
                       viewMode === 'zoomIn' 
                         ? 'w-full sm:w-full md:w-1/2 lg:w-1/3 xl:w-1/4 2xl:w-1/4' 
                         : viewMode === 'zoomOut'
-                        ? 'w-full sm:w-1/3 md:w-1/4 lg:w-1/6 xl:w-[14.285714%] 2xl:w-1/8'
-                        : 'w-full sm:w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/5 2xl:w-1/5'
+                        ? 'w-1/3 sm:w-1/3 md:w-1/4 lg:w-1/6 xl:w-[14.285714%] 2xl:w-1/8'
+                        : 'w-1/2 sm:w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/5 2xl:w-1/5'
                     }`}>
                       <SkeletonCard />
                     </div>
@@ -942,8 +942,8 @@ export default function Search() {
                         viewMode === 'zoomIn' 
                           ? 'w-full sm:w-full md:w-1/2 lg:w-1/3 xl:w-1/4 2xl:w-1/4' 
                           : viewMode === 'zoomOut'
-                          ? 'w-full sm:w-1/3 md:w-1/4 lg:w-1/6 xl:w-[14.285714%] 2xl:w-1/8'
-                          : 'w-full sm:w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/5 2xl:w-1/5'
+                          ? 'w-1/3 sm:w-1/3 md:w-1/4 lg:w-1/6 xl:w-[14.285714%] 2xl:w-1/8'
+                          : 'w-1/2 sm:w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/5 2xl:w-1/5'
                       } ${activeCardId === p.id ? 'active-card' : ''}`}
                       onTouchStart={() => {
                         // Store which card (if any) was active when touch started
