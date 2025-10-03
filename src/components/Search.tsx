@@ -69,8 +69,6 @@ export default function Search() {
   const [cardImageIndex, setCardImageIndex] = useState<Record<string, number>>({})
   // Track which cards have preloaded their images
   const preloadedImagesRef = useRef<Set<string>>(new Set())
-  // Track transitioning state for blur effect
-  const [transitioningCards, setTransitioningCards] = useState<Set<string>>(new Set())
   // Track card refs for scrolling
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({})
   // Track which card is expanded (zoomed) on mobile
@@ -254,37 +252,17 @@ export default function Search() {
     preloadedImagesRef.current.add(productId)
   }
 
-  // Change image with transition effect
+  // Change image instantly
   const changeImageWithTransition = (productId: string, imageIndex: number) => {
-    // Trigger blur transition
-    setTransitioningCards(prev => new Set(prev).add(productId))
-    
-    // Change image after brief delay for blur effect
-    setTimeout(() => {
-      setCardImageIndex(prev => ({
-        ...prev,
-        [productId]: imageIndex
-      }))
-      
-      // Remove blur after image changes
-      setTimeout(() => {
-        setTransitioningCards(prev => {
-          const newSet = new Set(prev)
-          newSet.delete(productId)
-          return newSet
-        })
-      }, 75) // Half of 150ms for crossfade
-    }, 75)
+    setCardImageIndex(prev => ({
+      ...prev,
+      [productId]: imageIndex
+    }))
   }
 
   // Reset to first image
   const resetToFirstImage = (productId: string) => {
     setCardImageIndex(prev => ({ ...prev, [productId]: 0 }))
-    setTransitioningCards(prev => {
-      const newSet = new Set(prev)
-      newSet.delete(productId)
-      return newSet
-    })
   }
 
   // Expand a specific card to full width
@@ -1137,22 +1115,16 @@ export default function Search() {
                               const currentImageIndex = cardImageIndex[p.id] || 0
                               const currentImage = images[currentImageIndex]?.url || url
                               const isActive = activeCardId === p.id
-                              const isTransitioning = transitioningCards.has(p.id)
                               
                               return (
                                 <>
-                                  {/* Main image - scaled on hover/tap with crossfade and blur */}
+                                  {/* Main image - scaled on hover/tap */}
                                   <img
                                     key={`${p.id}-${currentImageIndex}`}
                                     src={currentImage}
-                                    className={`absolute inset-0 w-full h-full object-cover transition-all ease-out ${
+                                    className={`absolute inset-0 w-full h-full object-cover transition-transform duration-300 ease-out ${
                                       isActive ? 'scale-105' : 'scale-100'
-                                    } ${
-                                      isTransitioning ? 'blur-[2px] duration-[75ms]' : 'blur-0 duration-[150ms]'
                                     }`}
-                                    style={{
-                                      opacity: isTransitioning ? 0.7 : 1
-                                    }}
                                     alt={p.title}
                                   />
                                   
