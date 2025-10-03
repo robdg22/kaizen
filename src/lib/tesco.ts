@@ -172,10 +172,15 @@ query GetCategoryProducts($categoryId: ID, $page: Int, $count: Int, $sortBy: Str
   }
 }`
 
+export interface BrowseFilterType {
+  name: string
+  values: string[]
+}
+
 export class TescoAPI {
   private static proxyUrl = "https://tesco-proxy-b4fena2ys-robdgraham-gmailcoms-projects.vercel.app/api/tesco"
 
-  static async searchProducts(options: { query: string; page?: number; count?: number; sortBy?: string; filters?: string[] }) {
+  static async searchProducts(options: { query: string; page?: number; count?: number; sortBy?: string; filters?: BrowseFilterType[] }) {
     const variables = {
       query: options.query,
       page: options.page ?? 0,

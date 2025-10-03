@@ -162,17 +162,15 @@ export default function Search() {
     // Always load 40 products regardless of viewport
     const productCount = 40
     
-    // Filter to clothing products only (passed as JSON string to match API type)
-    const clothingFilter = JSON.stringify({
-      name: "superDepartment",
-      values: ["Clothing & Accessories"]
-    })
-    
+    // Filter to clothing products only
     const result = await TescoAPI.searchProducts({ 
       query, 
       count: productCount, 
       page: 0, 
-      filters: [clothingFilter] 
+      filters: [{
+        name: "superDepartment",
+        values: ["Clothing & Accessories"]
+      }]
     })
     if (result.errors) {
       setError(result.errors[0]?.message ?? 'Unknown error')
