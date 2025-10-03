@@ -58,7 +58,7 @@ export default function Search() {
   const [touchEnd, setTouchEnd] = useState<number | null>(null)
   
   // Thumbnail view mode for clothing products
-  type ViewMode = 'default' | 'image-only' | 'large'
+  type ViewMode = 'zoomIn' | 'default' | 'zoomOut'
   const [viewMode, setViewMode] = useState<ViewMode>('default')
   
   // Track which card is currently tapped/hovered for overlay display
@@ -782,15 +782,15 @@ export default function Search() {
 
               {isLoading && (
                 <div className={`flex flex-wrap transition-all duration-500 ease-in-out ${
-                  viewMode === 'large' ? 'gap-0' : 'gap-0'
+                  viewMode === 'zoomIn' ? 'gap-0' : 'gap-0'
                 }`}>
                   {Array.from({ length: 40 }).map((_, i) => (
                     <div key={i} className={`transition-all duration-500 ease-[cubic-bezier(0.77,0,0.18,1)] ${
-                      viewMode === 'large' 
-                        ? 'w-full xs:w-1/2 sm:w-1/3 md:w-1/4' 
-                        : viewMode === 'image-only'
-                        ? 'w-1/3 xs:w-1/4 sm:w-1/5 md:w-1/6'
-                        : 'w-1/2 xs:w-1/3 sm:w-1/4 md:w-1/5'
+                      viewMode === 'zoomIn' 
+                        ? 'w-full sm:w-full md:w-1/2 lg:w-1/3 xl:w-1/4 2xl:w-1/4' 
+                        : viewMode === 'zoomOut'
+                        ? 'w-full sm:w-1/3 md:w-1/4 lg:w-1/6 xl:w-[14.285714%] 2xl:w-1/8'
+                        : 'w-full sm:w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/5 2xl:w-1/5'
                     }`}>
                       <SkeletonCard />
                     </div>
@@ -814,21 +814,21 @@ export default function Search() {
                         <div 
                           className="absolute bg-black h-[24px] top-[2px] w-[27px] transition-all duration-200"
                           style={{
-                            left: viewMode === 'large' ? '2px' : viewMode === 'default' ? '29px' : '56px',
+                            left: viewMode === 'zoomIn' ? '2px' : viewMode === 'default' ? '29px' : '56px',
                             transitionTimingFunction: 'cubic-bezier(0.77, 0, 0.18, 1)'
                           }}
                         />
                         
                         {/* Button container */}
                         <div className="absolute h-[24px] left-[2px] top-[2px] w-[81px] flex">
-                          {/* Large view button */}
+                          {/* Zoom In view button */}
                           <button
-                            onClick={() => setViewMode('large')}
+                            onClick={() => setViewMode('zoomIn')}
                             className="flex items-center justify-center w-[27px] h-[24px] p-[6px] cursor-pointer relative z-10"
-                            aria-label="Large view"
+                            aria-label="Zoom in view"
                           >
                             <div className={`border-[1.5px] border-solid w-[16px] h-[16px] transition-colors ${
-                              viewMode === 'large' ? 'border-white' : 'border-black'
+                              viewMode === 'zoomIn' ? 'border-white' : 'border-black'
                             }`} />
                           </button>
                           
@@ -844,13 +844,13 @@ export default function Search() {
                             </svg>
                           </button>
                           
-                          {/* Small/Image-only view button */}
+                          {/* Zoom Out view button */}
                           <button
-                            onClick={() => setViewMode('image-only')}
+                            onClick={() => setViewMode('zoomOut')}
                             className="flex items-center justify-center w-[27px] h-[24px] p-[6px] cursor-pointer relative z-10"
-                            aria-label="Image only view"
+                            aria-label="Zoom out view"
                           >
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={viewMode === 'image-only' ? 'text-white' : 'text-black'}>
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={viewMode === 'zoomOut' ? 'text-white' : 'text-black'}>
                               <rect x="1" y="1" width="4" height="4" fill="currentColor"/>
                               <rect x="6" y="1" width="4" height="4" fill="currentColor"/>
                               <rect x="11" y="1" width="4" height="4" fill="currentColor"/>
@@ -869,7 +869,7 @@ export default function Search() {
                 })()}
                 
                 <div className={`flex flex-wrap transition-all duration-500 ease-in-out ${
-                  viewMode === 'large' ? 'gap-0' : 'gap-0'
+                  viewMode === 'zoomIn' ? 'gap-0' : 'gap-0'
                 }`}>
                 {products.map((p) => {
                   // Generate realistic rating data based on product ID
@@ -889,11 +889,11 @@ export default function Search() {
                       key={p.id}
                       data-product-card
                       className={`bg-white relative cursor-pointer hover:shadow-lg transition-all duration-500 ease-[cubic-bezier(0.77,0,0.18,1)] ${
-                        viewMode === 'large' 
-                          ? 'w-full xs:w-1/2 sm:w-1/3 md:w-1/4' 
-                          : viewMode === 'image-only'
-                          ? 'w-1/3 xs:w-1/4 sm:w-1/5 md:w-1/6'
-                          : 'w-1/2 xs:w-1/3 sm:w-1/4 md:w-1/5'
+                        viewMode === 'zoomIn' 
+                          ? 'w-full sm:w-full md:w-1/2 lg:w-1/3 xl:w-1/4 2xl:w-1/4' 
+                          : viewMode === 'zoomOut'
+                          ? 'w-full sm:w-1/3 md:w-1/4 lg:w-1/6 xl:w-[14.285714%] 2xl:w-1/8'
+                          : 'w-full sm:w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/5 2xl:w-1/5'
                       } ${activeCardId === p.id ? 'active-card' : ''}`}
                       onTouchStart={() => {
                         // Store which card (if any) was active when touch started
@@ -903,9 +903,9 @@ export default function Search() {
                         if (activeCardId !== p.id) {
                           setActiveCardId(p.id)
                           
-                          // On mobile (< 375px), switch to large view when tapping card in default or image-only mode
-                          if (window.innerWidth < 375 && (viewMode === 'default' || viewMode === 'image-only')) {
-                            setViewMode('large')
+                          // On mobile (< 640px), switch to zoomIn view when tapping card in default or zoomOut mode
+                          if (window.innerWidth < 640 && (viewMode === 'default' || viewMode === 'zoomOut')) {
+                            setViewMode('zoomIn')
                           }
                         }
                       }}
@@ -939,7 +939,7 @@ export default function Search() {
                           {/* Image Container - 4:5 aspect ratio with hover/tap overlay */}
                           <div 
                             className={`w-full aspect-[4/5] relative overflow-hidden transition-all duration-500 ease-in-out ${
-                              viewMode === 'large' ? 'aspect-[4/5]' : 'aspect-[4/5]'
+                              viewMode === 'zoomIn' ? 'aspect-[4/5]' : 'aspect-[4/5]'
                             }`}
                             onTouchStart={(e) => {
                               // Track touch start position for swipe detection
@@ -1014,11 +1014,10 @@ export default function Search() {
                                     alt={p.title}
                                   />
                                   
-                                  {/* Info overlay - shown on hover/tap, hidden in image-only mode */}
-                                  {viewMode !== 'image-only' && (
-                                    <div className={`absolute bottom-0 left-0 right-0 bg-white transition-all duration-200 ${
-                                      isActive ? 'opacity-100' : 'opacity-0'
-                                    }`}>
+                                  {/* Info overlay - shown on hover/tap */}
+                                  <div className={`absolute bottom-0 left-0 right-0 bg-white transition-all duration-200 ${
+                                    isActive ? 'opacity-100' : 'opacity-0'
+                                  }`}>
                                       {/* Image thumbnails */}
                                       {images.length > 1 && (
                                         <div className="flex gap-1 px-2 pt-2 pb-1 pointer-events-auto">
@@ -1077,8 +1076,7 @@ export default function Search() {
                                           )}
                                         </div>
                                       </div>
-                                    </div>
-                                  )}
+                                  </div>
                                 </>
                               )
                             })()}
