@@ -45,6 +45,8 @@ export default function Search() {
   const [products, setProducts] = useState<ProductItem[]>([])
   const [hasSearched, setHasSearched] = useState(false)
   const [isHeaderVisible, setIsHeaderVisible] = useState(true)
+  // Track mock sale prices for products
+  const [productSalePrices, setProductSalePrices] = useState<Record<string, { wasPrice: number; discount: number }>>({})
   const [basketCount, setBasketCount] = useState(0)
   const [basketTotal, setBasketTotal] = useState(0)
   const [lastScrollY, setLastScrollY] = useState(0)
@@ -75,6 +77,21 @@ export default function Search() {
   const [expandedCardId, setExpandedCardId] = useState<string | null>(null)
   // Track product variations (all sizes/colors) for each product
   const [productVariations, setProductVariations] = useState<Record<string, ProductVariation[]>>({})
+  // Track selected color and size for each product
+  const [selectedColor, setSelectedColor] = useState<Record<string, string>>({})
+  const [selectedSize, setSelectedSize] = useState<Record<string, string>>({})
+  // Track variant images for each product (when color changes)
+  const [variantImages, setVariantImages] = useState<Record<string, { url: string }[]>>({})
+  // Track basket items
+  const [basketItems, setBasketItems] = useState<Array<{
+    id: string
+    tpnc: string
+    title: string
+    color: string
+    size: string
+    price: number
+    imageUrl: string
+  }>>([])
 
   // Check URL for query parameter on mount
   useEffect(() => {
@@ -221,6 +238,10 @@ export default function Search() {
       // @ts-expect-error narrow by known shape
       const items = result.data.search?.productItems || result.data.search?.products || []
       setProducts(items as ProductItem[])
+      
+      // Generate mock sale prices for random products
+      const salePrices = generateSalePrices(items as ProductItem[])
+      setProductSalePrices(salePrices)
     }
     setIsLoading(false)
   }
@@ -255,7 +276,7 @@ export default function Search() {
   }
 
   // Fetch product variations (all sizes/colors) when hovering/tapping a card
-  const fetchProductVariations = async (productId: string) => {
+  const fetchProductVariations = async (productId: string, currentColor?: string, currentSize?: string) => {
     // Don't fetch if we already have variations for this product
     if (productVariations[productId]) return
     
@@ -266,6 +287,14 @@ export default function Search() {
           ...prev,
           [productId]: result.data!.product.variations!.products
         }))
+        
+        // Initialize selected color and size to current product's values
+        if (currentColor && !selectedColor[productId]) {
+          setSelectedColor(prev => ({ ...prev, [productId]: currentColor }))
+        }
+        if (currentSize && !selectedSize[productId]) {
+          setSelectedSize(prev => ({ ...prev, [productId]: currentSize }))
+        }
       }
     } catch (error) {
       console.error('Failed to fetch product variations:', error)
@@ -275,6 +304,79 @@ export default function Search() {
         [productId]: []
       }))
     }
+  }
+
+  // Fetch variant images when color changes
+  const fetchVariantImages = async (productId: string, variantTpnc: string) => {
+    try {
+      const result = await TescoAPI.getProduct({ tpnc: variantTpnc })
+      if (result.data?.product?.media?.images) {
+        setVariantImages(prev => ({
+          ...prev,
+          [productId]: result.data!.product.media!.images as { url: string }[]
+        }))
+        // Reset image index when color changes
+        setCardImageIndex(prev => ({ ...prev, [productId]: 0 }))
+      }
+    } catch (error) {
+      console.error('Failed to fetch variant images:', error)
+    }
+  }
+
+  // Generate mock sale prices for products
+  const generateSalePrices = (products: ProductItem[]) => {
+    const salePrices: Record<string, { wasPrice: number; discount: number }> = {}
+    const discountOptions = [10, 25, 50]
+    
+    products.forEach(product => {
+      // Randomly decide if this product has a sale (50% chance)
+      if (Math.random() > 0.5) {
+        const actualPrice = product.price?.actual ?? product.price?.price ?? 0
+        // Pick a random discount
+        const discount = discountOptions[Math.floor(Math.random() * discountOptions.length)]
+        // Calculate was price from actual price
+        const wasPrice = actualPrice / (1 - discount / 100)
+        
+        salePrices[product.id] = {
+          wasPrice: Number(wasPrice.toFixed(2)),
+          discount
+        }
+      }
+    })
+    
+    return salePrices
+  }
+
+  // Add item to basket
+  const addToBasket = (product: ProductItem, color: string, size: string, variantTpnc: string) => {
+    const images = variantImages[product.id] || product.media?.images || []
+    const imageUrl = images[0]?.url || getImageUrl(product).url || ''
+    const price = product.price?.actual ?? product.price?.price ?? 0
+    
+    const basketItem = {
+      id: `${variantTpnc}-${Date.now()}`, // Unique ID for this basket entry
+      tpnc: variantTpnc,
+      title: product.title,
+      color,
+      size,
+      price,
+      imageUrl
+    }
+    
+    // Add to basket items array
+    setBasketItems(prev => [...prev, basketItem])
+    
+    // Update basket count and total
+    setBasketCount(prev => prev + 1)
+    setBasketTotal(prev => Number((prev + price).toFixed(2)))
+    
+    // Show header so user can see basket count updated
+    setIsHeaderVisible(true)
+    
+    // Show success feedback
+    console.log('Added to basket:', basketItem)
+    console.log('Total items in basket:', basketItems.length + 1)
+    alert(`Added to basket:\n${product.title}\nColour: ${color}\nSize: ${size}\nPrice: £${price.toFixed(2)}`)
   }
 
   // Change image instantly
@@ -491,16 +593,38 @@ export default function Search() {
               </h1>
               
               {/* Price */}
-              <div className="mb-4">
-                <span className="text-3xl font-bold text-gray-900">
-                  £{(currentProduct.price?.actual ?? currentProduct.price?.price ?? 0).toFixed(2)}
-                </span>
-                {currentProduct.price?.price && currentProduct.price?.price !== currentProduct.price?.actual && (
-                  <span className="ml-3 text-lg text-gray-500 line-through">
-                    £{currentProduct.price?.price.toFixed(2)}
-                  </span>
-                )}
-              </div>
+              {(() => {
+                const actualPrice = currentProduct.price?.actual ?? currentProduct.price?.price ?? 0
+                const saleData = productSalePrices[currentProduct.id]
+                
+                if (saleData) {
+                  return (
+                    <div className="mb-4 flex flex-col gap-2">
+                      <div className="flex gap-2 items-baseline">
+                        <p className="text-[20px] font-bold leading-[24px] text-[#e81c2d]">
+                          Now £{actualPrice.toFixed(2)}
+                        </p>
+                        <p className="text-[16px] leading-[20px] line-through text-[#333333]">
+                          Was £{saleData.wasPrice.toFixed(2)}
+                        </p>
+                      </div>
+                      <div className="bg-[#e81c2d] px-2 py-1 inline-flex items-center justify-center self-start">
+                        <p className="text-[18px] font-bold leading-[22px] text-white">
+                          {saleData.discount}% OFF
+                        </p>
+                      </div>
+                    </div>
+                  )
+                } else {
+                  return (
+                    <div className="mb-4">
+                      <span className="text-3xl font-bold text-gray-900">
+                        £{actualPrice.toFixed(2)}
+                      </span>
+                    </div>
+                  )
+                }
+              })()}
               
               {/* Rating */}
               <div className="flex items-center gap-3 mb-6">
@@ -1036,7 +1160,9 @@ export default function Search() {
                           
                           // Fetch product variations for F&F products
                           if (isFFProduct) {
-                            fetchProductVariations(p.id)
+                            const currentColor = p.variationAttributes?.find(attr => attr.attributeGroup === 'colour')?.attributeGroupData?.value
+                            const currentSize = p.variationAttributes?.find(attr => attr.attributeGroup === 'size')?.attributeGroupData?.value
+                            fetchProductVariations(p.id, currentColor, currentSize)
                           }
                         }
                         
@@ -1070,7 +1196,9 @@ export default function Search() {
                         
                         // Fetch product variations for F&F products
                         if (isFFProduct) {
-                          fetchProductVariations(p.id)
+                          const currentColor = p.variationAttributes?.find(attr => attr.attributeGroup === 'colour')?.attributeGroupData?.value
+                          const currentSize = p.variationAttributes?.find(attr => attr.attributeGroup === 'size')?.attributeGroupData?.value
+                          fetchProductVariations(p.id, currentColor, currentSize)
                         }
                       }}
                       onMouseLeave={() => {
@@ -1082,8 +1210,8 @@ export default function Search() {
                       onBlur={() => setActiveCardId(null)}
                     >
                       {isFFProduct ? (
-                        // F&F (Clothing) Card Design
-                        <>
+                        // F&F (Clothing) Card Design - Wrapper to contain image and overlay
+                        <div className="relative">
                           {/* Image Container - 4:5 aspect ratio with hover/tap overlay */}
                           <div 
                             className={`w-full aspect-[4/5] relative overflow-hidden transition-all duration-500 ease-in-out ${
@@ -1146,10 +1274,20 @@ export default function Search() {
                           >
                             {(() => {
                               const { url } = getImageUrl(p)
-                              const images = p.media?.images || [{ url }]
+                              // Use variant images if they exist, otherwise use product's original images
+                              const images = variantImages[p.id] || p.media?.images || [{ url }]
                               const currentImageIndex = cardImageIndex[p.id] || 0
                               const currentImage = images[currentImageIndex]?.url || url
                               const isActive = activeCardId === p.id
+                              
+                              // Get color variations to show badge count
+                              const variations = productVariations[p.id]
+                              const colorSet = new Set<string>()
+                              variations?.forEach(variant => {
+                                const color = variant.variationAttributes?.find(attr => attr.attributeGroup === 'colour')?.attributeGroupData?.value
+                                if (color) colorSet.add(color)
+                              })
+                              const colorCount = colorSet.size
                               
                               return (
                                 <>
@@ -1163,172 +1301,244 @@ export default function Search() {
                                     alt={p.title}
                                   />
                                   
-                                  {/* Info overlay - shown on hover/tap */}
-                                  <div className={`absolute bottom-0 left-0 right-0 bg-white transition-all duration-200 ${
-                                    isActive ? 'opacity-100' : 'opacity-0'
-                                  }`}>
-                                      {/* Image thumbnails */}
-                                      {images.length > 1 && (
-                                        <div className="flex gap-1 px-2 pt-2 pb-1 pointer-events-auto">
-                                          {images.map((img, imgIndex) => (
-                                            <button
-                                              key={imgIndex}
-                                              className={`w-8 h-10 flex-shrink-0 rounded overflow-hidden border-2 transition-all ${
-                                                imgIndex === currentImageIndex 
-                                                  ? 'border-black' 
-                                                  : 'border-transparent hover:border-gray-400'
-                                              }`}
-                                              onMouseEnter={(e) => {
-                                                e.stopPropagation()
-                                                changeImageWithTransition(p.id, imgIndex)
-                                              }}
-                                              onClick={(e) => {
-                                                e.stopPropagation()
-                                                changeImageWithTransition(p.id, imgIndex)
-                                              }}
-                                            >
-                                              <img
-                                                src={img.url}
-                                                className="w-full h-full object-cover"
-                                                alt={`${p.title} - view ${imgIndex + 1}`}
-                                              />
-                                            </button>
-                                          ))}
-                                        </div>
-                                      )}
-                                      
-                                      <div className="px-4 pb-3 pointer-events-none">
-                                        {/* Title */}
-                                        <h3 className="text-sm font-bold text-black leading-[18px] mb-2 line-clamp-2">
-                                          {(() => {
-                                            let title = p.title
-                                            // Remove "F&F " from start
-                                            title = title.replace(/^F&F\s+/i, '')
-                                            // Remove everything from " in" onwards
-                                            const inIndex = title.toLowerCase().indexOf(' in')
-                                            if (inIndex !== -1) {
-                                              title = title.substring(0, inIndex)
-                                            }
-                                            return title
-                                          })()}
-                                        </h3>
-                                        
-                                        {/* Price */}
-                                        <div className="flex items-baseline gap-2 mb-2">
-                                          <span className="text-base font-bold text-black leading-5">
-                                            £{(p.price?.actual ?? p.price?.price ?? 0).toFixed(2)}
-                                          </span>
-                                          {p.price?.price && p.price?.price !== p.price?.actual && (
-                                            <span className="text-sm text-gray-500 line-through">
-                                              £{p.price?.price.toFixed(2)}
-                                            </span>
-                                          )}
-                                        </div>
-                                        
-                                        {/* Sizes and Colors */}
-                                        {(() => {
-                                          // Get current product's color and size
-                                          const currentColor = p.variationAttributes?.find(attr => attr.attributeGroup === 'colour')?.attributeGroupData?.value
-                                          const currentSize = p.variationAttributes?.find(attr => attr.attributeGroup === 'size')?.attributeGroupData?.value
-                                          
-                                          // Get fetched variations for this product
-                                          const variations = productVariations[p.id]
-                                          
-                                          if (!variations || variations.length === 0) return null
-                                          
-                                          // Extract unique sizes from variations and check availability
-                                          const sizeMap = new Map<string, { isAvailable: boolean }>()
-                                          variations.forEach(variant => {
-                                            const size = variant.variationAttributes?.find(attr => attr.attributeGroup === 'size')?.attributeGroupData?.value
-                                            if (size) {
-                                              const isAvailable = variant.sellers?.results?.some(s => s.isForSale && s.status === 'AvailableForSale') ?? false
-                                              sizeMap.set(size, { isAvailable })
-                                            }
-                                          })
-                                          
-                                          const sizes = Array.from(sizeMap.entries())
-                                            .map(([size, { isAvailable }]) => ({ size, isAvailable }))
-                                            .sort((a, b) => {
-                                              const numA = parseInt(a.size || '0')
-                                              const numB = parseInt(b.size || '0')
-                                              return numA - numB
-                                            })
-                                          
-                                          // Extract unique colors from variations
-                                          const colorMap = new Map<string, { isAvailable: boolean }>()
-                                          variations.forEach(variant => {
-                                            const color = variant.variationAttributes?.find(attr => attr.attributeGroup === 'colour')?.attributeGroupData?.value
-                                            if (color) {
-                                              const isAvailable = variant.sellers?.results?.some(s => s.isForSale && s.status === 'AvailableForSale') ?? false
-                                              colorMap.set(color, { isAvailable })
-                                            }
-                                          })
-                                          
-                                          const colors = Array.from(colorMap.entries())
-                                            .map(([color, { isAvailable }]) => ({ color, isAvailable }))
-                                          
-                                          if (sizes.length === 0 && colors.length === 0) return null
-                                          
-                                          return (
-                                            <div className="space-y-2">
-                                              {/* Available Colours */}
-                                              {colors.length > 0 && (
-                                                <div>
-                                                  <p className="text-xs text-gray-600 mb-1">Colour:</p>
-                                                  <div className="flex flex-wrap gap-1">
-                                                    {colors.slice(0, 5).map(({ color, isAvailable }) => (
-                                                      <span 
-                                                        key={color}
-                                                        className={`text-xs px-2 py-0.5 border rounded ${
-                                                          color === currentColor 
-                                                            ? 'border-black bg-black text-white' 
-                                                            : isAvailable
-                                                            ? 'border-gray-300 bg-white text-gray-700'
-                                                            : 'border-gray-200 bg-gray-100 text-gray-400 line-through'
-                                                        }`}
-                                                      >
-                                                        {color}
-                                                      </span>
-                                                    ))}
-                                                    {colors.length > 5 && (
-                                                      <span className="text-xs text-gray-500">+{colors.length - 5} more</span>
-                                                    )}
-                                                  </div>
-                                                </div>
-                                              )}
-                                              
-                                              {/* Available Sizes */}
-                                              {sizes.length > 0 && (
-                                                <div>
-                                                  <p className="text-xs text-gray-600 mb-1">Sizes:</p>
-                                                  <div className="flex flex-wrap gap-1">
-                                                    {sizes.map(({ size, isAvailable }) => (
-                                                      <span 
-                                                        key={size}
-                                                        className={`text-xs px-2 py-0.5 border rounded ${
-                                                          size === currentSize 
-                                                            ? 'border-black bg-black text-white' 
-                                                            : isAvailable
-                                                            ? 'border-gray-300 bg-white text-gray-700'
-                                                            : 'border-gray-200 bg-gray-100 text-gray-400 line-through'
-                                                        }`}
-                                                      >
-                                                        {size}
-                                                      </span>
-                                                    ))}
-                                                  </div>
-                                                </div>
-                                              )}
-                                            </div>
-                                          )
-                                        })()}
-                                      </div>
-                                  </div>
+                                  {/* SALE badge - top-left corner */}
+                                  {productSalePrices[p.id] && (
+                                    <div className="absolute top-[8px] left-[8px] bg-[#e81c2d] px-[4px] py-0 z-10">
+                                      <p className="text-[12px] font-bold leading-[16px] text-white text-center">
+                                        SALE
+                                      </p>
+                                    </div>
+                                  )}
+                                  
+                                  {/* Color count badge - top-left corner, below SALE */}
+                                  {colorCount > 1 && (
+                                    <div className="absolute top-[32px] left-[8px] bg-white px-[4px] py-0 z-10">
+                                      <p className="text-[12px] font-bold leading-[16px] text-black text-center">
+                                        {colorCount} colours
+                                      </p>
+                                    </div>
+                                  )}
+                                  
+                                  {/* Image thumbnails - shown on hover/tap */}
+                                  {images.length > 1 && isActive && (
+                                    <div className="absolute bottom-2 left-2 right-2 flex gap-1 pointer-events-auto z-20">
+                                      {images.map((img, imgIndex) => (
+                                        <button
+                                          key={imgIndex}
+                                          className={`w-8 h-10 flex-shrink-0 rounded overflow-hidden border-2 transition-all ${
+                                            imgIndex === currentImageIndex 
+                                              ? 'border-black bg-white' 
+                                              : 'border-white bg-white/80 hover:bg-white'
+                                          }`}
+                                          onMouseEnter={(e) => {
+                                            e.stopPropagation()
+                                            changeImageWithTransition(p.id, imgIndex)
+                                          }}
+                                          onClick={(e) => {
+                                            e.stopPropagation()
+                                            changeImageWithTransition(p.id, imgIndex)
+                                          }}
+                                        >
+                                          <img
+                                            src={img.url}
+                                            className="w-full h-full object-cover"
+                                            alt={`${p.title} - view ${imgIndex + 1}`}
+                                          />
+                                        </button>
+                                      ))}
+                                    </div>
+                                  )}
                                 </>
                               )
                             })()}
                           </div>
-                        </>
+                          
+                          {/* Info overlay - on top of other cards, shown on hover/tap */}
+                          {activeCardId === p.id && (() => {
+                            // Get current product's color and size
+                            const currentColor = selectedColor[p.id] || p.variationAttributes?.find(attr => attr.attributeGroup === 'colour')?.attributeGroupData?.value
+                            const currentSize = selectedSize[p.id] || p.variationAttributes?.find(attr => attr.attributeGroup === 'size')?.attributeGroupData?.value
+                            
+                            // Get fetched variations for this product
+                            const variations = productVariations[p.id]
+                            
+                            if (!variations || variations.length === 0) return null
+                            
+                            // Extract unique sizes from variations with their tpnc (filtered by current color)
+                            const sizeMap = new Map<string, { isAvailable: boolean; tpnc: string }>()
+                            variations.forEach(variant => {
+                              const size = variant.variationAttributes?.find(attr => attr.attributeGroup === 'size')?.attributeGroupData?.value
+                              const variantColor = variant.variationAttributes?.find(attr => attr.attributeGroup === 'colour')?.attributeGroupData?.value
+                              if (size && variantColor === currentColor) {
+                                const isAvailable = variant.sellers?.results?.some(s => s.isForSale && s.status === 'AvailableForSale') ?? false
+                                sizeMap.set(size, { isAvailable, tpnc: variant.tpnc })
+                              }
+                            })
+                            
+                            const sizes = Array.from(sizeMap.entries())
+                              .map(([size, data]) => ({ size, ...data }))
+                              .sort((a, b) => {
+                                const numA = parseInt(a.size || '0')
+                                const numB = parseInt(b.size || '0')
+                                return numA - numB
+                              })
+                            
+                            // Extract unique colors from variations
+                            const colorSet = new Set<string>()
+                            const colorTpncMap = new Map<string, string>()
+                            variations.forEach(variant => {
+                              const color = variant.variationAttributes?.find(attr => attr.attributeGroup === 'colour')?.attributeGroupData?.value
+                              if (color) {
+                                colorSet.add(color)
+                                // Store one tpnc per color
+                                if (!colorTpncMap.has(color)) {
+                                  colorTpncMap.set(color, variant.tpnc)
+                                }
+                              }
+                            })
+                            
+                            const colors = Array.from(colorSet)
+                            
+                            return (
+                              <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 shadow-lg p-4 space-y-3 z-50">
+                                {/* Title */}
+                                <h3 className="text-sm font-bold text-black leading-tight">
+                                  {(() => {
+                                    let title = p.title
+                                    // Remove "F&F " from start
+                                    title = title.replace(/^F&F\s+/i, '')
+                                    // Remove everything from " in" onwards
+                                    const inIndex = title.toLowerCase().indexOf(' in')
+                                    if (inIndex !== -1) {
+                                      title = title.substring(0, inIndex)
+                                    }
+                                    return title
+                                  })()}
+                                </h3>
+                                
+                                {/* Price */}
+                                {(() => {
+                                  const actualPrice = p.price?.actual ?? p.price?.price ?? 0
+                                  const saleData = productSalePrices[p.id]
+                                  
+                                  if (saleData) {
+                                    return (
+                                      <div className="flex flex-col gap-1">
+                                        <div className="flex gap-1 items-baseline">
+                                          <p className="text-[14px] font-bold leading-[18px] text-[#e81c2d]">
+                                            Now £{actualPrice.toFixed(2)}
+                                          </p>
+                                          <p className="text-[12px] leading-[16px] line-through text-[#333333]">
+                                            Was £{saleData.wasPrice.toFixed(2)}
+                                          </p>
+                                        </div>
+                                        <div className="bg-[#e81c2d] px-1 inline-flex items-center justify-center self-start">
+                                          <p className="text-[16px] font-bold leading-[20px] text-white">
+                                            {saleData.discount}% OFF
+                                          </p>
+                                        </div>
+                                      </div>
+                                    )
+                                  } else {
+                                    return (
+                                      <div className="flex items-baseline gap-2">
+                                        <span className="text-lg font-bold text-black">
+                                          £{actualPrice.toFixed(2)}
+                                        </span>
+                                      </div>
+                                    )
+                                  }
+                                })()}
+                                
+                                {/* Color - Dropdown if multiple, Label if single */}
+                                {colors.length > 1 ? (
+                                  <div>
+                                    <label className="text-xs text-gray-600 mb-1 block">Colour:</label>
+                                    <select
+                                      className="w-full px-3 py-2 border border-gray-300 rounded text-sm pointer-events-auto"
+                                      value={currentColor}
+                                      onChange={(e) => {
+                                        const newColor = e.target.value
+                                        setSelectedColor(prev => ({ ...prev, [p.id]: newColor }))
+                                        
+                                        // Fetch images for the new color variant
+                                        const variantTpnc = colorTpncMap.get(newColor)
+                                        if (variantTpnc) {
+                                          fetchVariantImages(p.id, variantTpnc)
+                                        }
+                                      }}
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      {colors.map((color) => (
+                                        <option key={color} value={color}>
+                                          {color}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                ) : colors.length === 1 ? (
+                                  <div>
+                                    <span className="text-xs text-gray-600">Colour: </span>
+                                    <span className="text-sm font-medium text-black">{colors[0]}</span>
+                                  </div>
+                                ) : null}
+                                
+                                {/* Size Dropdown */}
+                                {sizes.length > 0 && (
+                                  <div>
+                                    <label className="text-xs text-gray-600 mb-1 block">Size:</label>
+                                    <select
+                                      className="w-full px-3 py-2 border border-gray-300 rounded text-sm pointer-events-auto"
+                                      value={currentSize}
+                                      onChange={(e) => {
+                                        const newSize = e.target.value
+                                        setSelectedSize(prev => ({ ...prev, [p.id]: newSize }))
+                                      }}
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      {sizes.map(({ size, isAvailable }) => (
+                                        <option key={size} value={size} disabled={!isAvailable}>
+                                          {size} {!isAvailable ? '(Out of stock)' : ''}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                )}
+                                
+                                {/* Add to Basket Button */}
+                                {currentColor && currentSize && (() => {
+                                  // Find the variant tpnc for the selected color and size
+                                  const selectedVariant = variations.find(v => {
+                                    const vColor = v.variationAttributes?.find(attr => attr.attributeGroup === 'colour')?.attributeGroupData?.value
+                                    const vSize = v.variationAttributes?.find(attr => attr.attributeGroup === 'size')?.attributeGroupData?.value
+                                    return vColor === currentColor && vSize === currentSize
+                                  })
+                                  
+                                  const isAvailable = selectedVariant?.sellers?.results?.some(s => s.isForSale && s.status === 'AvailableForSale') ?? false
+                                  
+                                  return (
+                                    <button
+                                      className={`w-full py-3 rounded font-medium text-sm transition-colors pointer-events-auto ${
+                                        isAvailable
+                                          ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                      }`}
+                                      disabled={!isAvailable}
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        if (selectedVariant && isAvailable) {
+                                          addToBasket(p, currentColor, currentSize, selectedVariant.tpnc)
+                                        }
+                                      }}
+                                    >
+                                      {isAvailable ? 'Add to basket' : 'Out of stock'}
+                                    </button>
+                                  )
+                                })()}
+                              </div>
+                            )
+                          })()}
+                        </div>
                       ) : (
                         // Regular Product Card Design
                         <>
@@ -1460,14 +1670,41 @@ export default function Search() {
                               {/* Add to Basket */}
                               <div className="flex flex-col gap-3">
                                 {/* Price */}
-                                <div className="flex items-baseline gap-2">
-                                  <span className="text-2xl font-bold text-[#333333] leading-7">
-                                    £{(p.price?.actual ?? p.price?.price ?? 1.00).toFixed(2)}
-                                  </span>
-                                  <span className="text-sm text-[#666666] leading-[18px]">
-                                    £3.67/kg
-                                  </span>
-                                </div>
+                                {(() => {
+                                  const actualPrice = p.price?.actual ?? p.price?.price ?? 1.00
+                                  const saleData = productSalePrices[p.id]
+                                  
+                                  if (saleData) {
+                                    return (
+                                      <div className="flex flex-col gap-1">
+                                        <div className="flex gap-2 items-baseline">
+                                          <p className="text-[14px] font-bold leading-[18px] text-[#e81c2d]">
+                                            Now £{actualPrice.toFixed(2)}
+                                          </p>
+                                          <p className="text-[12px] leading-[16px] line-through text-[#333333]">
+                                            Was £{saleData.wasPrice.toFixed(2)}
+                                          </p>
+                                        </div>
+                                        <div className="bg-[#e81c2d] px-1 inline-flex items-center justify-center self-start">
+                                          <p className="text-[16px] font-bold leading-[20px] text-white">
+                                            {saleData.discount}% OFF
+                                          </p>
+                                        </div>
+                                      </div>
+                                    )
+                                  } else {
+                                    return (
+                                      <div className="flex items-baseline gap-2">
+                                        <span className="text-2xl font-bold text-[#333333] leading-7">
+                                          £{actualPrice.toFixed(2)}
+                                        </span>
+                                        <span className="text-sm text-[#666666] leading-[18px]">
+                                          £3.67/kg
+                                        </span>
+                                      </div>
+                                    )
+                                  }
+                                })()}
 
                                 {/* Quantity Controls */}
                                 <div className="flex gap-3 items-start">

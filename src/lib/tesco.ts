@@ -122,6 +122,9 @@ export interface GetProductResponse {
     id: string
     baseProductId: string
     title: string
+    media?: {
+      images?: Array<{ url: string; aspectRatio?: number | string }>
+    }
     variations?: {
       products: ProductVariation[]
     }
@@ -410,6 +413,12 @@ query GetProduct($tpnc: String!) {
     id
     baseProductId
     title
+    media {
+      images {
+        url
+        aspectRatio
+      }
+    }
     variations {
       products {
         id

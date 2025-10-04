@@ -1,24 +1,24 @@
 @import "tailwindcss";
 
-/* Tesco custom fonts */
+/* F&F Sans custom fonts */
 @font-face {
-  font-family: "TESCO Modern";
-  src: url("../assets/fonts/TESCOModern-Regular-web.ttf") format("truetype");
+  font-family: "F&F Sans";
+  src: url("../assets/fonts/FandFSans-Regular-v1.004.otf") format("opentype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "TESCO Modern";
-  src: url("../assets/fonts/TESCOModern-Bold-web.ttf") format("truetype");
+  font-family: "F&F Sans";
+  src: url("../assets/fonts/FandFSans-Bold-v1.004.otf") format("opentype");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 
 @theme {
-  --font-sans: "TESCO Modern", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+  --font-sans: "F&F Sans", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
     Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
   --animate-spin-slow: spin 3s linear infinite;
 }
