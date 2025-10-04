@@ -877,25 +877,25 @@ export default function Search() {
                     </div>
                   )}
                 </button>
-                
-                {/* Basket */}
+              
+              {/* Basket */}
                 <div className="flex items-center gap-2">
-                  <div className={`relative ${isFFTheme ? 'bg-black' : 'bg-[#003adc]'} p-2 rounded-[20px] flex items-center justify-center`}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M7.25001 18.9999V12.9999H8.75001V18.9999H7.25001Z" fill="white"/>
-                      <path d="M11.25 18.9999V12.9999H12.75V18.9999H11.25Z" fill="white"/>
-                      <path d="M15.25 12.9999V18.9999H16.75V12.9999H15.25Z" fill="white"/>
-                      <path fillRule="evenodd" clipRule="evenodd" d="M18.6127 2.43241L13.4474 9.7499H23.4396L20.5987 22.2499H3.40133L0.560425 9.7499H11.6114L17.3873 1.56738L18.6127 2.43241ZM4.59868 20.7499L2.43959 11.2499H21.5604L19.4013 20.7499H4.59868Z" fill="white"/>
-                    </svg>
-                    {basketCount > 0 && (
-                      <div className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#E81C2D] flex items-center justify-center">
-                        <span className="text-white text-[11px] leading-[11px] font-bold">{basketCount}</span>
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <div className={`${isFFTheme ? 'text-black' : 'text-[#003adc]'} font-bold text-[16px] leading-[20px] flex items-center`} aria-live="polite" aria-atomic="true">
-                      <RollingCurrency value={basketTotal} />
+                <div className={`relative ${isFFTheme ? 'bg-black' : 'bg-[#003adc]'} p-2 rounded-[20px] flex items-center justify-center`}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7.25001 18.9999V12.9999H8.75001V18.9999H7.25001Z" fill="white"/>
+                    <path d="M11.25 18.9999V12.9999H12.75V18.9999H11.25Z" fill="white"/>
+                    <path d="M15.25 12.9999V18.9999H16.75V12.9999H15.25Z" fill="white"/>
+                    <path fillRule="evenodd" clipRule="evenodd" d="M18.6127 2.43241L13.4474 9.7499H23.4396L20.5987 22.2499H3.40133L0.560425 9.7499H11.6114L17.3873 1.56738L18.6127 2.43241ZM4.59868 20.7499L2.43959 11.2499H21.5604L19.4013 20.7499H4.59868Z" fill="white"/>
+                  </svg>
+                  {basketCount > 0 && (
+                    <div className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#E81C2D] flex items-center justify-center">
+                      <span className="text-white text-[11px] leading-[11px] font-bold">{basketCount}</span>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <div className={`${isFFTheme ? 'text-black' : 'text-[#003adc]'} font-bold text-[16px] leading-[20px] flex items-center`} aria-live="polite" aria-atomic="true">
+                    <RollingCurrency value={basketTotal} />
                     </div>
                   </div>
                 </div>
@@ -931,6 +931,70 @@ export default function Search() {
                   <div className={`absolute inset-[-4px] rounded-[24px] border-[3px] ${isFFTheme ? 'border-black' : 'border-[#003adc]'} border-solid pointer-events-none opacity-0 group-focus-visible:opacity-100 transition-opacity`}></div>
                 </button>
               </div>
+              
+              {/* View Mode Toggle - Mobile */}
+              {hasSearched && products.length > 0 && (
+                <div className="pt-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[14px] font-bold text-black">View:</span>
+                    <div className="relative bg-gray-100 w-[85px] h-[28px] border border-gray-400 rounded">
+                      {/* Black background indicator */}
+                      <div 
+                        className="absolute bg-black h-[24px] top-[2px] w-[27px] transition-all duration-200 rounded"
+                        style={{
+                          left: viewMode === 'zoomIn' ? '2px' : viewMode === 'default' ? '29px' : '56px',
+                          transitionTimingFunction: 'cubic-bezier(0.77, 0, 0.18, 1)'
+                        }}
+                      />
+                      
+                      {/* Button container */}
+                      <div className="absolute h-[24px] left-[2px] top-[2px] w-[81px] flex">
+                        {/* Zoom In view button */}
+                        <button
+                          onClick={() => setViewMode('zoomIn')}
+                          className="flex items-center justify-center w-[27px] h-[24px] p-[6px] cursor-pointer relative z-10"
+                          aria-label="Zoom in view"
+                        >
+                          <div className={`border-[1.5px] border-solid w-[16px] h-[16px] transition-colors ${
+                            viewMode === 'zoomIn' ? 'border-white' : 'border-black'
+                          }`} />
+                        </button>
+                        
+                        {/* Default view button */}
+                        <button
+                          onClick={() => setViewMode('default')}
+                          className="flex items-center justify-center w-[27px] h-[24px] p-[6px] cursor-pointer relative z-10"
+                          aria-label="Default view"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={viewMode === 'default' ? 'text-white' : 'text-black'}>
+                            <rect x="4" y="2" width="3" height="12" fill="currentColor"/>
+                            <rect x="9" y="2" width="3" height="12" fill="currentColor"/>
+                          </svg>
+                        </button>
+                        
+                        {/* Zoom Out view button */}
+                        <button
+                          onClick={() => setViewMode('zoomOut')}
+                          className="flex items-center justify-center w-[27px] h-[24px] p-[6px] cursor-pointer relative z-10"
+                          aria-label="Zoom out view"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={viewMode === 'zoomOut' ? 'text-white' : 'text-black'}>
+                            <rect x="1" y="1" width="4" height="4" fill="currentColor"/>
+                            <rect x="6" y="1" width="4" height="4" fill="currentColor"/>
+                            <rect x="11" y="1" width="4" height="4" fill="currentColor"/>
+                            <rect x="1" y="6" width="4" height="4" fill="currentColor"/>
+                            <rect x="6" y="6" width="4" height="4" fill="currentColor"/>
+                            <rect x="11" y="6" width="4" height="4" fill="currentColor"/>
+                            <rect x="1" y="11" width="4" height="4" fill="currentColor"/>
+                            <rect x="6" y="11" width="4" height="4" fill="currentColor"/>
+                            <rect x="11" y="11" width="4" height="4" fill="currentColor"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
             )
@@ -1020,31 +1084,31 @@ export default function Search() {
                         </div>
                       )}
                     </button>
-                    
-                    {/* Basket */}
+                  
+                  {/* Basket */}
                     <div className="flex items-center gap-2">
-                      <div className={`relative ${isFFTheme ? 'bg-black' : 'bg-[#00539f]'} p-2 rounded-[20px] flex items-center justify-center`}>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M7.25001 18.9999V12.9999H8.75001V18.9999H7.25001Z" fill="white"/>
-                          <path d="M11.25 18.9999V12.9999H12.75V18.9999H11.25Z" fill="white"/>
-                          <path d="M15.25 12.9999V18.9999H16.75V12.9999H15.25Z" fill="white"/>
-                          <path fillRule="evenodd" clipRule="evenodd" d="M18.6127 2.43241L13.4474 9.7499H23.4396L20.5987 22.2499H3.40133L0.560425 9.7499H11.6114L17.3873 1.56738L18.6127 2.43241ZM4.59868 20.7499L2.43959 11.2499H21.5604L19.4013 20.7499H4.59868Z" fill="white"/>
-                        </svg>
-                        {basketCount > 0 && (
-                          <div className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#E81C2D] flex items-center justify-center">
-                            <span className="text-white text-[11px] leading-[11px] font-bold">{basketCount}</span>
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <div className={`${isFFTheme ? 'text-black' : 'text-[#00539f]'} font-bold text-[16px] leading-[20px] flex items-center`} aria-live="polite" aria-atomic="true">
-                          <RollingCurrency value={basketTotal} />
+                    <div className={`relative ${isFFTheme ? 'bg-black' : 'bg-[#00539f]'} p-2 rounded-[20px] flex items-center justify-center`}>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M7.25001 18.9999V12.9999H8.75001V18.9999H7.25001Z" fill="white"/>
+                        <path d="M11.25 18.9999V12.9999H12.75V18.9999H11.25Z" fill="white"/>
+                        <path d="M15.25 12.9999V18.9999H16.75V12.9999H15.25Z" fill="white"/>
+                        <path fillRule="evenodd" clipRule="evenodd" d="M18.6127 2.43241L13.4474 9.7499H23.4396L20.5987 22.2499H3.40133L0.560425 9.7499H11.6114L17.3873 1.56738L18.6127 2.43241ZM4.59868 20.7499L2.43959 11.2499H21.5604L19.4013 20.7499H4.59868Z" fill="white"/>
+                      </svg>
+                      {basketCount > 0 && (
+                        <div className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#E81C2D] flex items-center justify-center">
+                          <span className="text-white text-[11px] leading-[11px] font-bold">{basketCount}</span>
                         </div>
-                      </div>
+                      )}
+                    </div>
+                    <div>
+                      <div className={`${isFFTheme ? 'text-black' : 'text-[#00539f]'} font-bold text-[16px] leading-[20px] flex items-center`} aria-live="polite" aria-atomic="true">
+                        <RollingCurrency value={basketTotal} />
                     </div>
                   </div>
                 </div>
-                
+              </div>
+            </div>
+            
                 {/* View Mode Toggle - Below search bar */}
                 {hasSearched && products.length > 0 && (
                   <div className="pb-3 pt-2">
@@ -1113,9 +1177,9 @@ export default function Search() {
             
             {/* Bottom divider */}
             <div className="bg-[#cccccc] h-px w-full"></div>
-          </div>
-            )
-          })()}
+                    </div>
+                  )
+                })()}
         </div>
       </div>
 
@@ -1413,32 +1477,32 @@ export default function Search() {
                                    {/* Image thumbnails - shown on hover/tap */}
                                    {images.length > 1 && isActive && (
                                      <div className="absolute bottom-2 left-2 right-2 flex gap-1 pointer-events-auto z-[2]">
-                                           {images.map((img, imgIndex) => (
-                                             <button
-                                               key={imgIndex}
+                                          {images.map((img, imgIndex) => (
+                                            <button
+                                              key={imgIndex}
                                                className={`w-8 h-10 flex-shrink-0 overflow-hidden transition-all ${
-                                                 imgIndex === currentImageIndex 
+                                                imgIndex === currentImageIndex 
                                                ? 'border-2 border-black' 
                                                : 'border border-black'
-                                               }`}
-                                               onMouseEnter={(e) => {
-                                                 e.stopPropagation()
-                                                 changeImageWithTransition(p.id, imgIndex)
-                                               }}
-                                               onClick={(e) => {
-                                                 e.stopPropagation()
-                                                 changeImageWithTransition(p.id, imgIndex)
-                                               }}
-                                             >
-                                               <img
-                                                 src={img.url}
-                                                 className="w-full h-full object-cover"
-                                                 alt={`${p.title} - view ${imgIndex + 1}`}
-                                               />
-                                             </button>
-                                           ))}
-                                         </div>
-                                       )}
+                                              }`}
+                                              onMouseEnter={(e) => {
+                                                e.stopPropagation()
+                                                changeImageWithTransition(p.id, imgIndex)
+                                              }}
+                                              onClick={(e) => {
+                                                e.stopPropagation()
+                                                changeImageWithTransition(p.id, imgIndex)
+                                              }}
+                                            >
+                                              <img
+                                                src={img.url}
+                                                className="w-full h-full object-cover"
+                                                alt={`${p.title} - view ${imgIndex + 1}`}
+                                              />
+                                            </button>
+                                          ))}
+                                        </div>
+                                      )}
                                 </>
                               )
                             })()}
