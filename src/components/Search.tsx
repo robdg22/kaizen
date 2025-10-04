@@ -92,6 +92,8 @@ export default function Search() {
     price: number
     imageUrl: string
   }>>([])
+  // Track which products just added to basket (for checkmark animation)
+  const [justAdded, setJustAdded] = useState<Record<string, boolean>>({})
 
   // Check URL for query parameter on mount
   useEffect(() => {
@@ -373,10 +375,17 @@ export default function Search() {
     // Show header so user can see basket count updated
     setIsHeaderVisible(true)
     
-    // Show success feedback
+    // Show checkmark animation
+    setJustAdded(prev => ({ ...prev, [product.id]: true }))
+    
+    // Clear checkmark after 2 seconds
+    setTimeout(() => {
+      setJustAdded(prev => ({ ...prev, [product.id]: false }))
+    }, 2000)
+    
+    // Log success (for debugging)
     console.log('Added to basket:', basketItem)
     console.log('Total items in basket:', basketItems.length + 1)
-    alert(`Added to basket:\n${product.title}\nColour: ${color}\nSize: ${size}\nPrice: £${price.toFixed(2)}`)
   }
 
   // Change image instantly
@@ -1353,6 +1362,56 @@ export default function Search() {
                             })()}
                           </div>
                           
+                          {/* Color swatches overlay at bottom of image - shown on hover/tap */}
+                          {activeCardId === p.id && (() => {
+                            const variations = productVariations[p.id]
+                            if (!variations || variations.length === 0) return null
+                            
+                            const currentColor = selectedColor[p.id] || p.variationAttributes?.find(attr => attr.attributeGroup === 'colour')?.attributeGroupData?.value
+                            
+                            // Get unique colors with their images
+                            const colorSet = new Set<string>()
+                            const colorData: Array<{ color: string; imageUrl?: string; tpnc: string }> = []
+                            variations.forEach(variant => {
+                              const color = variant.variationAttributes?.find(attr => attr.attributeGroup === 'colour')?.attributeGroupData?.value
+                              if (color && !colorSet.has(color)) {
+                                colorSet.add(color)
+                                colorData.push({
+                                  color,
+                                  imageUrl: undefined, // Will be loaded when color is selected
+                                  tpnc: variant.tpnc
+                                })
+                              }
+                            })
+                            
+                            return (
+                              <div className="absolute bottom-[5px] left-[5px] flex gap-1 items-center z-20">
+                                {colorData.slice(0, 3).map(({ color, imageUrl, tpnc }, idx) => {
+                                  const isSelected = color === currentColor
+                                  return (
+                                    <div
+                                      key={color}
+                                      className={`w-[32px] h-[40px] flex flex-col gap-1 items-start justify-center cursor-pointer pointer-events-auto ${
+                                        idx === 0 ? 'z-[3]' : idx === 1 ? 'z-[2]' : 'z-[1]'
+                                      }`}
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        setSelectedColor(prev => ({ ...prev, [p.id]: color }))
+                                        fetchVariantImages(p.id, tpnc)
+                                      }}
+                                    >
+                                      <div className={`w-full h-full border ${isSelected ? 'border-2 border-black' : 'border border-black'} bg-white overflow-hidden relative`}>
+                                        {imageUrl && (
+                                          <img src={imageUrl} alt={color} className="w-full h-full object-cover" />
+                                        )}
+                                      </div>
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            )
+                          })()}
+                          
                           {/* Info overlay - on top of other cards, shown on hover/tap */}
                           {activeCardId === p.id && (() => {
                             // Get current product's color and size
@@ -1400,141 +1459,180 @@ export default function Search() {
                             const colors = Array.from(colorSet)
                             
                             return (
-                              <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 shadow-lg p-4 space-y-3 z-50">
-                                {/* Title */}
-                                <h3 className="text-sm font-bold text-black leading-tight">
-                                  {(() => {
-                                    let title = p.title
-                                    // Remove "F&F " from start
-                                    title = title.replace(/^F&F\s+/i, '')
-                                    // Remove everything from " in" onwards
-                                    const inIndex = title.toLowerCase().indexOf(' in')
-                                    if (inIndex !== -1) {
-                                      title = title.substring(0, inIndex)
-                                    }
-                                    return title
-                                  })()}
-                                </h3>
-                                
-                                {/* Price */}
-                                {(() => {
-                                  const actualPrice = p.price?.actual ?? p.price?.price ?? 0
-                                  const saleData = productSalePrices[p.id]
-                                  
-                                  if (saleData) {
-                                    return (
-                                      <div className="flex flex-col gap-1">
-                                        <div className="flex gap-1 items-baseline">
-                                          <p className="text-[14px] font-bold leading-[18px] text-[#e81c2d]">
-                                            Now £{actualPrice.toFixed(2)}
-                                          </p>
-                                          <p className="text-[12px] leading-[16px] line-through text-[#333333]">
-                                            Was £{saleData.wasPrice.toFixed(2)}
+                              <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 shadow-lg z-50">
+                                <div className="p-[8px] flex gap-1 items-start justify-center w-full">
+                                  <div className="flex-1 flex flex-col gap-1 items-start min-w-0">
+                                    {/* Title */}
+                                    <p className="text-[12px] leading-[16px] text-black font-normal overflow-ellipsis overflow-hidden w-full" style={{ fontFamily: 'FandF Sans, sans-serif' }}>
+                                      {(() => {
+                                        let title = p.title
+                                        // Remove "F&F " from start
+                                        title = title.replace(/^F&F\s+/i, '')
+                                        // Remove everything from " in" onwards
+                                        const inIndex = title.toLowerCase().indexOf(' in')
+                                        if (inIndex !== -1) {
+                                          title = title.substring(0, inIndex)
+                                        }
+                                        return title
+                                      })()}
+                                    </p>
+                                    
+                                    {/* Price */}
+                                    {(() => {
+                                      const actualPrice = p.price?.actual ?? p.price?.price ?? 0
+                                      const saleData = productSalePrices[p.id]
+                                      
+                                      if (saleData) {
+                                        return (
+                                          <div className="flex flex-col gap-1 w-full">
+                                            <div className="flex gap-1 items-baseline">
+                                              <p className="text-[14px] font-bold leading-[18px] text-[#e81c2d]">
+                                                Now £{actualPrice.toFixed(2)}
+                                              </p>
+                                              <p className="text-[12px] leading-[16px] line-through text-[#333333]">
+                                                Was £{saleData.wasPrice.toFixed(2)}
+                                              </p>
+                                            </div>
+                                            <div className="bg-[#e81c2d] px-1 inline-flex items-center justify-center self-start">
+                                              <p className="text-[16px] font-bold leading-[20px] text-white">
+                                                {saleData.discount}% OFF
+                                              </p>
+                                            </div>
+                                          </div>
+                                        )
+                                      } else {
+                                        return (
+                                          <div className="flex gap-1 items-start">
+                                            <p className="text-[14px] font-bold leading-[18px] text-[#333333]">
+                                              £{actualPrice.toFixed(2)}
+                                            </p>
+                                          </div>
+                                        )
+                                      }
+                                    })()}
+                                    
+                                    {/* Color - Dropdown if multiple, Label if single */}
+                                    {colors.length > 1 ? (
+                                      <div className="flex flex-col items-start w-full">
+                                        <div className="flex gap-1 items-center mb-0">
+                                          <p className="text-[12px] font-bold leading-[16px] text-black" style={{ fontFamily: 'FandF Sans, sans-serif' }}>
+                                            Colour
                                           </p>
                                         </div>
-                                        <div className="bg-[#e81c2d] px-1 inline-flex items-center justify-center self-start">
-                                          <p className="text-[16px] font-bold leading-[20px] text-white">
-                                            {saleData.discount}% OFF
-                                          </p>
+                                        <div className="relative w-full">
+                                          <select
+                                            className="w-full h-[36px] px-[12px] py-[6px] border border-black bg-white text-[16px] leading-[20px] text-black appearance-none pointer-events-auto"
+                                            style={{ fontFamily: 'FandF Sans, sans-serif' }}
+                                            value={currentColor}
+                                            onChange={(e) => {
+                                              const newColor = e.target.value
+                                              setSelectedColor(prev => ({ ...prev, [p.id]: newColor }))
+                                              
+                                              // Fetch images for the new color variant
+                                              const variantTpnc = colorTpncMap.get(newColor)
+                                              if (variantTpnc) {
+                                                fetchVariantImages(p.id, variantTpnc)
+                                              }
+                                            }}
+                                            onClick={(e) => e.stopPropagation()}
+                                          >
+                                            {colors.map((color) => (
+                                              <option key={color} value={color}>
+                                                {color}
+                                              </option>
+                                            ))}
+                                          </select>
+                                          <div className="absolute right-[12px] top-1/2 -translate-y-1/2 pointer-events-none">
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                              <path d="M7 10L12 15L17 10" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                            </svg>
+                                          </div>
                                         </div>
                                       </div>
-                                    )
-                                  } else {
-                                    return (
-                                      <div className="flex items-baseline gap-2">
-                                        <span className="text-lg font-bold text-black">
-                                          £{actualPrice.toFixed(2)}
-                                        </span>
+                                    ) : colors.length === 1 ? (
+                                      <div className="flex gap-1 items-center">
+                                        <p className="text-[12px] font-bold leading-[16px] text-black" style={{ fontFamily: 'FandF Sans, sans-serif' }}>
+                                          Colour:
+                                        </p>
+                                        <p className="text-[12px] leading-[16px] text-black" style={{ fontFamily: 'FandF Sans, sans-serif' }}>
+                                          {colors[0]}
+                                        </p>
                                       </div>
-                                    )
-                                  }
-                                })()}
-                                
-                                {/* Color - Dropdown if multiple, Label if single */}
-                                {colors.length > 1 ? (
-                                  <div>
-                                    <label className="text-xs text-gray-600 mb-1 block">Colour:</label>
-                                    <select
-                                      className="w-full px-3 py-2 border border-gray-300 rounded text-sm pointer-events-auto"
-                                      value={currentColor}
-                                      onChange={(e) => {
-                                        const newColor = e.target.value
-                                        setSelectedColor(prev => ({ ...prev, [p.id]: newColor }))
-                                        
-                                        // Fetch images for the new color variant
-                                        const variantTpnc = colorTpncMap.get(newColor)
-                                        if (variantTpnc) {
-                                          fetchVariantImages(p.id, variantTpnc)
-                                        }
-                                      }}
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                      {colors.map((color) => (
-                                        <option key={color} value={color}>
-                                          {color}
-                                        </option>
-                                      ))}
-                                    </select>
+                                    ) : null}
+                                    
+                                    {/* Size Dropdown */}
+                                    {sizes.length > 0 && (
+                                      <div className="flex flex-col items-start w-full">
+                                        <div className="flex gap-1 items-center mb-0">
+                                          <p className="text-[12px] font-bold leading-[16px] text-black" style={{ fontFamily: 'FandF Sans, sans-serif' }}>
+                                            Size
+                                          </p>
+                                        </div>
+                                        <div className="relative w-full">
+                                          <select
+                                            className="w-full h-[36px] px-[12px] py-[6px] border border-black bg-white text-[16px] leading-[20px] text-black appearance-none pointer-events-auto"
+                                            style={{ fontFamily: 'FandF Sans, sans-serif' }}
+                                            value={currentSize}
+                                            onChange={(e) => {
+                                              const newSize = e.target.value
+                                              setSelectedSize(prev => ({ ...prev, [p.id]: newSize }))
+                                            }}
+                                            onClick={(e) => e.stopPropagation()}
+                                          >
+                                            {sizes.map(({ size, isAvailable }) => (
+                                              <option key={size} value={size} disabled={!isAvailable}>
+                                                {size} {!isAvailable ? '(Out of stock)' : ''}
+                                              </option>
+                                            ))}
+                                          </select>
+                                          <div className="absolute right-[12px] top-1/2 -translate-y-1/2 pointer-events-none">
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                              <path d="M7 10L12 15L17 10" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                            </svg>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+                                    
+                                    {/* Add to Basket Button */}
+                                    {currentColor && currentSize && (() => {
+                                      // Find the variant tpnc for the selected color and size
+                                      const selectedVariant = variations.find(v => {
+                                        const vColor = v.variationAttributes?.find(attr => attr.attributeGroup === 'colour')?.attributeGroupData?.value
+                                        const vSize = v.variationAttributes?.find(attr => attr.attributeGroup === 'size')?.attributeGroupData?.value
+                                        return vColor === currentColor && vSize === currentSize
+                                      })
+                                      
+                                      const isAvailable = selectedVariant?.sellers?.results?.some(s => s.isForSale && s.status === 'AvailableForSale') ?? false
+                                      const isJustAdded = justAdded[p.id]
+                                      
+                                      return (
+                                        <button
+                                          className={`bg-black px-[18px] py-[6px] flex gap-1 items-center justify-center pointer-events-auto transition-all duration-150 ${
+                                            !isAvailable ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105 active:scale-95'
+                                          }`}
+                                          disabled={!isAvailable}
+                                          onClick={(e) => {
+                                            e.stopPropagation()
+                                            if (selectedVariant && isAvailable) {
+                                              addToBasket(p, currentColor, currentSize, selectedVariant.tpnc)
+                                            }
+                                          }}
+                                        >
+                                          {isJustAdded ? (
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="animate-scale-in">
+                                              <path d="M20 6L9 17L4 12" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                            </svg>
+                                          ) : (
+                                            <p className="text-[16px] font-bold leading-[20px] text-white text-center" style={{ fontFamily: 'FandF Sans, sans-serif' }}>
+                                              {isAvailable ? 'ADD' : 'OUT OF STOCK'}
+                                            </p>
+                                          )}
+                                        </button>
+                                      )
+                                    })()}
                                   </div>
-                                ) : colors.length === 1 ? (
-                                  <div>
-                                    <span className="text-xs text-gray-600">Colour: </span>
-                                    <span className="text-sm font-medium text-black">{colors[0]}</span>
-                                  </div>
-                                ) : null}
-                                
-                                {/* Size Dropdown */}
-                                {sizes.length > 0 && (
-                                  <div>
-                                    <label className="text-xs text-gray-600 mb-1 block">Size:</label>
-                                    <select
-                                      className="w-full px-3 py-2 border border-gray-300 rounded text-sm pointer-events-auto"
-                                      value={currentSize}
-                                      onChange={(e) => {
-                                        const newSize = e.target.value
-                                        setSelectedSize(prev => ({ ...prev, [p.id]: newSize }))
-                                      }}
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                      {sizes.map(({ size, isAvailable }) => (
-                                        <option key={size} value={size} disabled={!isAvailable}>
-                                          {size} {!isAvailable ? '(Out of stock)' : ''}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  </div>
-                                )}
-                                
-                                {/* Add to Basket Button */}
-                                {currentColor && currentSize && (() => {
-                                  // Find the variant tpnc for the selected color and size
-                                  const selectedVariant = variations.find(v => {
-                                    const vColor = v.variationAttributes?.find(attr => attr.attributeGroup === 'colour')?.attributeGroupData?.value
-                                    const vSize = v.variationAttributes?.find(attr => attr.attributeGroup === 'size')?.attributeGroupData?.value
-                                    return vColor === currentColor && vSize === currentSize
-                                  })
-                                  
-                                  const isAvailable = selectedVariant?.sellers?.results?.some(s => s.isForSale && s.status === 'AvailableForSale') ?? false
-                                  
-                                  return (
-                                    <button
-                                      className={`w-full py-3 rounded font-medium text-sm transition-colors pointer-events-auto ${
-                                        isAvailable
-                                          ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                      }`}
-                                      disabled={!isAvailable}
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        if (selectedVariant && isAvailable) {
-                                          addToBasket(p, currentColor, currentSize, selectedVariant.tpnc)
-                                        }
-                                      }}
-                                    >
-                                      {isAvailable ? 'Add to basket' : 'Out of stock'}
-                                    </button>
-                                  )
-                                })()}
+                                </div>
                               </div>
                             )
                           })()}
