@@ -1248,7 +1248,7 @@ export default function Search() {
                           : viewMode === 'zoomOut'
                           ? 'w-1/3 sm:w-1/3 md:w-1/4 lg:w-1/6 xl:w-[14.285714%] 2xl:w-1/8'
                           : 'w-1/2 sm:w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/5 2xl:w-1/5'
-                      } ${activeCardId === p.id ? 'active-card' : ''}`}
+                      } ${activeCardId === p.id ? 'active-card z-[100]' : ''}`}
                       onTouchStart={(e) => {
                         // Store which card (if any) was active when touch started
                         touchStartActiveCardRef.current = activeCardId
