@@ -1367,7 +1367,7 @@ export default function Search() {
                                   
                                   {/* SALE badge - top-left corner */}
                                   {productSalePrices[p.id] && (
-                                    <div className="absolute top-[8px] left-[8px] bg-[#e81c2d] px-[4px] pt-[2px] pb-0 z-10">
+                                    <div className="absolute top-[8px] left-[8px] bg-[#e81c2d] px-[4px] pt-[2px] pb-0 z-[1]">
                                       <p className="text-[12px] font-bold leading-[16px] text-white text-center">
                                         SALE
                                       </p>
@@ -1376,7 +1376,7 @@ export default function Search() {
                                   
                                   {/* Color count badge - top-left corner, below SALE if present */}
                                   {colorCount > 1 && (
-                                    <div className={`absolute ${productSalePrices[p.id] ? 'top-[32px]' : 'top-[8px]'} left-[8px] bg-white px-[4px] pt-[2px] pb-0 z-10`}>
+                                    <div className={`absolute ${productSalePrices[p.id] ? 'top-[32px]' : 'top-[8px]'} left-[8px] bg-white px-[4px] pt-[2px] pb-0 z-[1]`}>
                                       <p className="text-[12px] font-bold leading-[16px] text-black text-center">
                                         {colorCount} colours
                                       </p>
@@ -1397,7 +1397,7 @@ export default function Search() {
                                       e.preventDefault()
                                       toggleWishlist(p.id)
                                     }}
-                                    className="absolute top-[8px] right-[8px] z-20 p-1 bg-white rounded-full hover:scale-110 active:scale-95 transition-transform pointer-events-auto"
+                                    className="absolute top-[8px] right-[8px] z-[2] p-1 bg-white rounded-full hover:scale-110 active:scale-95 transition-transform pointer-events-auto"
                                   >
                                     {wishlistItems.has(p.id) ? (
                                       <svg width="24" height="24" viewBox="0 0 24 24" fill="black" xmlns="http://www.w3.org/2000/svg">
@@ -1412,7 +1412,7 @@ export default function Search() {
                                   
                                    {/* Image thumbnails - shown on hover/tap */}
                                    {images.length > 1 && isActive && (
-                                     <div className="absolute bottom-2 left-2 right-2 flex gap-1 pointer-events-auto z-20">
+                                     <div className="absolute bottom-2 left-2 right-2 flex gap-1 pointer-events-auto z-[2]">
                                            {images.map((img, imgIndex) => (
                                              <button
                                                key={imgIndex}
