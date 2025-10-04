@@ -1389,6 +1389,14 @@ export default function Search() {
                                       e.stopPropagation()
                                       toggleWishlist(p.id)
                                     }}
+                                    onTouchStart={(e) => {
+                                      e.stopPropagation()
+                                    }}
+                                    onTouchEnd={(e) => {
+                                      e.stopPropagation()
+                                      e.preventDefault()
+                                      toggleWishlist(p.id)
+                                    }}
                                     className="absolute top-[8px] right-[8px] z-20 p-1 bg-white rounded-full hover:scale-110 active:scale-95 transition-transform pointer-events-auto"
                                   >
                                     {wishlistItems.has(p.id) ? (
