@@ -94,6 +94,12 @@ export default function Search() {
   }>>([])
   // Track which products just added to basket (for checkmark animation)
   const [justAdded, setJustAdded] = useState<Record<string, boolean>>({})
+  // Track wishlist items
+  const [wishlistItems, setWishlistItems] = useState<Set<string>>(new Set())
+  const [showWishlist, setShowWishlist] = useState(false)
+  
+  // Derive wishlist count from the Set size
+  const wishlistCount = wishlistItems.size
 
   // Check URL for query parameter on mount
   useEffect(() => {
@@ -347,6 +353,19 @@ export default function Search() {
     })
     
     return salePrices
+  }
+
+  // Toggle wishlist
+  const toggleWishlist = (productId: string) => {
+    setWishlistItems(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(productId)) {
+        newSet.delete(productId)
+      } else {
+        newSet.add(productId)
+      }
+      return newSet
+    })
   }
 
   // Add item to basket
@@ -626,11 +645,11 @@ export default function Search() {
                   )
                 } else {
                   return (
-                    <div className="mb-4">
-                      <span className="text-3xl font-bold text-gray-900">
+              <div className="mb-4">
+                <span className="text-3xl font-bold text-gray-900">
                         £{actualPrice.toFixed(2)}
-                      </span>
-                    </div>
+                </span>
+              </div>
                   )
                 }
               })()}
@@ -842,24 +861,42 @@ export default function Search() {
                 </div>
               </div>
               
-              {/* Basket */}
-              <div className="flex items-center gap-2 pb-2 pt-3">
-                <div className={`relative ${isFFTheme ? 'bg-black' : 'bg-[#003adc]'} p-2 rounded-[20px] flex items-center justify-center`}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M7.25001 18.9999V12.9999H8.75001V18.9999H7.25001Z" fill="white"/>
-                    <path d="M11.25 18.9999V12.9999H12.75V18.9999H11.25Z" fill="white"/>
-                    <path d="M15.25 12.9999V18.9999H16.75V12.9999H15.25Z" fill="white"/>
-                    <path fillRule="evenodd" clipRule="evenodd" d="M18.6127 2.43241L13.4474 9.7499H23.4396L20.5987 22.2499H3.40133L0.560425 9.7499H11.6114L17.3873 1.56738L18.6127 2.43241ZM4.59868 20.7499L2.43959 11.2499H21.5604L19.4013 20.7499H4.59868Z" fill="white"/>
+              {/* Wishlist & Basket */}
+              <div className="flex items-center gap-3 pb-2 pt-3">
+                {/* Wishlist Button */}
+                <button 
+                  onClick={() => setShowWishlist(true)}
+                  className="relative bg-black p-2 rounded-[20px] flex items-center justify-center hover:scale-105 active:scale-95 transition-transform duration-150"
+                >
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                   </svg>
-                  {basketCount > 0 && (
+                  {wishlistCount > 0 && (
                     <div className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#E81C2D] flex items-center justify-center">
-                      <span className="text-white text-[11px] leading-[11px] font-bold">{basketCount}</span>
+                      <span className="text-white text-[11px] leading-[11px] font-bold">{wishlistCount}</span>
                     </div>
                   )}
-                </div>
-                <div>
-                  <div className={`${isFFTheme ? 'text-black' : 'text-[#003adc]'} font-bold text-[16px] leading-[20px] flex items-center`} aria-live="polite" aria-atomic="true">
-                    <RollingCurrency value={basketTotal} />
+                </button>
+                
+                {/* Basket */}
+                <div className="flex items-center gap-2">
+                  <div className={`relative ${isFFTheme ? 'bg-black' : 'bg-[#003adc]'} p-2 rounded-[20px] flex items-center justify-center`}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M7.25001 18.9999V12.9999H8.75001V18.9999H7.25001Z" fill="white"/>
+                      <path d="M11.25 18.9999V12.9999H12.75V18.9999H11.25Z" fill="white"/>
+                      <path d="M15.25 12.9999V18.9999H16.75V12.9999H15.25Z" fill="white"/>
+                      <path fillRule="evenodd" clipRule="evenodd" d="M18.6127 2.43241L13.4474 9.7499H23.4396L20.5987 22.2499H3.40133L0.560425 9.7499H11.6114L17.3873 1.56738L18.6127 2.43241ZM4.59868 20.7499L2.43959 11.2499H21.5604L19.4013 20.7499H4.59868Z" fill="white"/>
+                    </svg>
+                    {basketCount > 0 && (
+                      <div className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#E81C2D] flex items-center justify-center">
+                        <span className="text-white text-[11px] leading-[11px] font-bold">{basketCount}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <div className={`${isFFTheme ? 'text-black' : 'text-[#003adc]'} font-bold text-[16px] leading-[20px] flex items-center`} aria-live="polite" aria-atomic="true">
+                      <RollingCurrency value={basketTotal} />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -967,83 +1004,56 @@ export default function Search() {
                     </div>
                   </div>
                   
-                  {/* Basket */}
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <div className={`relative ${isFFTheme ? 'bg-black' : 'bg-[#00539f]'} p-2 rounded-[20px] flex items-center justify-center`}>
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M7.25001 18.9999V12.9999H8.75001V18.9999H7.25001Z" fill="white"/>
-                        <path d="M11.25 18.9999V12.9999H12.75V18.9999H11.25Z" fill="white"/>
-                        <path d="M15.25 12.9999V18.9999H16.75V12.9999H15.25Z" fill="white"/>
-                        <path fillRule="evenodd" clipRule="evenodd" d="M18.6127 2.43241L13.4474 9.7499H23.4396L20.5987 22.2499H3.40133L0.560425 9.7499H11.6114L17.3873 1.56738L18.6127 2.43241ZM4.59868 20.7499L2.43959 11.2499H21.5604L19.4013 20.7499H4.59868Z" fill="white"/>
+                  {/* Wishlist & Basket */}
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    {/* Wishlist Button */}
+                    <button 
+                      onClick={() => setShowWishlist(true)}
+                      className="relative bg-black p-2 rounded-[20px] flex items-center justify-center hover:scale-105 active:scale-95 transition-transform duration-150"
+                    >
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                       </svg>
-                      {basketCount > 0 && (
+                      {wishlistCount > 0 && (
                         <div className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#E81C2D] flex items-center justify-center">
-                          <span className="text-white text-[11px] leading-[11px] font-bold">{basketCount}</span>
+                          <span className="text-white text-[11px] leading-[11px] font-bold">{wishlistCount}</span>
                         </div>
                       )}
-                    </div>
-                    <div>
-                      <div className={`${isFFTheme ? 'text-black' : 'text-[#00539f]'} font-bold text-[16px] leading-[20px] flex items-center`} aria-live="polite" aria-atomic="true">
-                        <RollingCurrency value={basketTotal} />
+                    </button>
+                    
+                    {/* Basket */}
+                    <div className="flex items-center gap-2">
+                      <div className={`relative ${isFFTheme ? 'bg-black' : 'bg-[#00539f]'} p-2 rounded-[20px] flex items-center justify-center`}>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M7.25001 18.9999V12.9999H8.75001V18.9999H7.25001Z" fill="white"/>
+                          <path d="M11.25 18.9999V12.9999H12.75V18.9999H11.25Z" fill="white"/>
+                          <path d="M15.25 12.9999V18.9999H16.75V12.9999H15.25Z" fill="white"/>
+                          <path fillRule="evenodd" clipRule="evenodd" d="M18.6127 2.43241L13.4474 9.7499H23.4396L20.5987 22.2499H3.40133L0.560425 9.7499H11.6114L17.3873 1.56738L18.6127 2.43241ZM4.59868 20.7499L2.43959 11.2499H21.5604L19.4013 20.7499H4.59868Z" fill="white"/>
+                        </svg>
+                        {basketCount > 0 && (
+                          <div className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#E81C2D] flex items-center justify-center">
+                            <span className="text-white text-[11px] leading-[11px] font-bold">{basketCount}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <div className={`${isFFTheme ? 'text-black' : 'text-[#00539f]'} font-bold text-[16px] leading-[20px] flex items-center`} aria-live="polite" aria-atomic="true">
+                          <RollingCurrency value={basketTotal} />
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-            
-            {/* Bottom divider */}
-            <div className="bg-[#cccccc] h-px w-full"></div>
-          </div>
-            )
-          })()}
-        </div>
-      </div>
-
-      {/* Content Container with padding for fixed header */}
-      <div className="pt-[124px]">
-        {/* Results Section - Only show after search */}
-        {hasSearched && (() => {
-          
-          return (
-            <div>
-      {error && (
-                <p className="text-red-600 mb-4">{error}</p>
-              )}
-
-              {isLoading && (
-                <div className={`flex flex-wrap transition-all duration-500 ease-in-out ${
-                  viewMode === 'zoomIn' ? 'gap-0' : 'gap-0'
-                }`}>
-                  {Array.from({ length: 40 }).map((_, i) => (
-                    <div key={i} className={`transition-all duration-500 ease-[cubic-bezier(0.77,0,0.18,1)] ${
-                      viewMode === 'zoomIn' 
-                        ? 'w-full sm:w-full md:w-1/2 lg:w-1/3 xl:w-1/4 2xl:w-1/4' 
-                        : viewMode === 'zoomOut'
-                        ? 'w-1/3 sm:w-1/3 md:w-1/4 lg:w-1/6 xl:w-[14.285714%] 2xl:w-1/8'
-                        : 'w-1/2 sm:w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/5 2xl:w-1/5'
-                    }`}>
-                      <SkeletonCard />
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {!isLoading && products.length === 0 && query.trim() && (
-                <p className="text-gray-600 text-center py-8">No products found for "{query}"</p>
-              )}
-
-              {!isLoading && products.length > 0 && (
-              <>
-                {/* View Mode Toggle for Clothing Products */}
-                {(() => {
-                  // Always show toggle for clothing-only branch
-                  return (
-                    <div className="mb-6 px-2">
-                      <div className="relative bg-white w-[85px] h-[28px]">
+                
+                {/* View Mode Toggle - Below search bar */}
+                {hasSearched && products.length > 0 && (
+                  <div className="pb-3 pt-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[14px] font-bold text-black">View:</span>
+                      <div className="relative bg-white w-[85px] h-[28px] border border-gray-300 rounded">
                         {/* Black background indicator */}
                         <div 
-                          className="absolute bg-black h-[24px] top-[2px] w-[27px] transition-all duration-200"
+                          className="absolute bg-black h-[24px] top-[2px] w-[27px] transition-all duration-200 rounded"
                           style={{
                             left: viewMode === 'zoomIn' ? '2px' : viewMode === 'default' ? '29px' : '56px',
                             transitionTimingFunction: 'cubic-bezier(0.77, 0, 0.18, 1)'
@@ -1096,9 +1106,54 @@ export default function Search() {
                         </div>
                       </div>
                     </div>
-                  )
-                })()}
-                
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {/* Bottom divider */}
+            <div className="bg-[#cccccc] h-px w-full"></div>
+          </div>
+            )
+          })()}
+        </div>
+      </div>
+
+      {/* Content Container with padding for fixed header */}
+      <div className="pt-[170px]">
+        {/* Results Section - Only show after search */}
+        {hasSearched && (() => {
+          
+          return (
+            <div>
+      {error && (
+                <p className="text-red-600 mb-4">{error}</p>
+              )}
+
+              {isLoading && (
+                <div className={`flex flex-wrap transition-all duration-500 ease-in-out ${
+                  viewMode === 'zoomIn' ? 'gap-0' : 'gap-0'
+                }`}>
+                  {Array.from({ length: 40 }).map((_, i) => (
+                    <div key={i} className={`transition-all duration-500 ease-[cubic-bezier(0.77,0,0.18,1)] ${
+                      viewMode === 'zoomIn' 
+                        ? 'w-full sm:w-full md:w-1/2 lg:w-1/3 xl:w-1/4 2xl:w-1/4' 
+                        : viewMode === 'zoomOut'
+                        ? 'w-1/3 sm:w-1/3 md:w-1/4 lg:w-1/6 xl:w-[14.285714%] 2xl:w-1/8'
+                        : 'w-1/2 sm:w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/5 2xl:w-1/5'
+                    }`}>
+                      <SkeletonCard />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {!isLoading && products.length === 0 && query.trim() && (
+                <p className="text-gray-600 text-center py-8">No products found for "{query}"</p>
+              )}
+
+              {!isLoading && products.length > 0 && (
+              <>
                 <div className={`flex flex-wrap transition-all duration-500 ease-in-out ${
                   viewMode === 'zoomIn' ? 'gap-0' : 'gap-0'
                 }`}>
@@ -1312,105 +1367,74 @@ export default function Search() {
                                   
                                   {/* SALE badge - top-left corner */}
                                   {productSalePrices[p.id] && (
-                                    <div className="absolute top-[8px] left-[8px] bg-[#e81c2d] px-[4px] py-0 z-10">
+                                    <div className="absolute top-[8px] left-[8px] bg-[#e81c2d] px-[4px] pt-[2px] pb-0 z-10">
                                       <p className="text-[12px] font-bold leading-[16px] text-white text-center">
                                         SALE
                                       </p>
                                     </div>
                                   )}
                                   
-                                  {/* Color count badge - top-left corner, below SALE */}
+                                  {/* Color count badge - top-left corner, below SALE if present */}
                                   {colorCount > 1 && (
-                                    <div className="absolute top-[32px] left-[8px] bg-white px-[4px] py-0 z-10">
+                                    <div className={`absolute ${productSalePrices[p.id] ? 'top-[32px]' : 'top-[8px]'} left-[8px] bg-white px-[4px] pt-[2px] pb-0 z-10`}>
                                       <p className="text-[12px] font-bold leading-[16px] text-black text-center">
                                         {colorCount} colours
                                       </p>
                                     </div>
                                   )}
                                   
-                                  {/* Image thumbnails - shown on hover/tap */}
-                                  {images.length > 1 && isActive && (
-                                    <div className="absolute bottom-2 left-2 right-2 flex gap-1 pointer-events-auto z-20">
-                                      {images.map((img, imgIndex) => (
-                                        <button
-                                          key={imgIndex}
-                                          className={`w-8 h-10 flex-shrink-0 rounded overflow-hidden border-2 transition-all ${
-                                            imgIndex === currentImageIndex 
-                                              ? 'border-black bg-white' 
-                                              : 'border-white bg-white/80 hover:bg-white'
-                                          }`}
-                                          onMouseEnter={(e) => {
-                                            e.stopPropagation()
-                                            changeImageWithTransition(p.id, imgIndex)
-                                          }}
-                                          onClick={(e) => {
-                                            e.stopPropagation()
-                                            changeImageWithTransition(p.id, imgIndex)
-                                          }}
-                                        >
-                                          <img
-                                            src={img.url}
-                                            className="w-full h-full object-cover"
-                                            alt={`${p.title} - view ${imgIndex + 1}`}
-                                          />
-                                        </button>
-                                      ))}
-                                    </div>
-                                  )}
+                                  {/* Wishlist heart icon - top-right corner */}
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      toggleWishlist(p.id)
+                                    }}
+                                    className="absolute top-[8px] right-[8px] z-20 p-1 bg-white rounded-full hover:scale-110 active:scale-95 transition-transform pointer-events-auto"
+                                  >
+                                    {wishlistItems.has(p.id) ? (
+                                      <svg width="24" height="24" viewBox="0 0 24 24" fill="black" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                      </svg>
+                                    ) : (
+                                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                      </svg>
+                                    )}
+                                  </button>
+                                  
+                                   {/* Image thumbnails - shown on hover/tap */}
+                                   {images.length > 1 && isActive && (
+                                     <div className="absolute bottom-2 left-2 right-2 flex gap-1 pointer-events-auto z-20">
+                                           {images.map((img, imgIndex) => (
+                                             <button
+                                               key={imgIndex}
+                                               className={`w-8 h-10 flex-shrink-0 overflow-hidden transition-all ${
+                                                 imgIndex === currentImageIndex 
+                                               ? 'border-2 border-black' 
+                                               : 'border border-black'
+                                               }`}
+                                               onMouseEnter={(e) => {
+                                                 e.stopPropagation()
+                                                 changeImageWithTransition(p.id, imgIndex)
+                                               }}
+                                               onClick={(e) => {
+                                                 e.stopPropagation()
+                                                 changeImageWithTransition(p.id, imgIndex)
+                                               }}
+                                             >
+                                               <img
+                                                 src={img.url}
+                                                 className="w-full h-full object-cover"
+                                                 alt={`${p.title} - view ${imgIndex + 1}`}
+                                               />
+                                             </button>
+                                           ))}
+                                         </div>
+                                       )}
                                 </>
                               )
                             })()}
                           </div>
-                          
-                          {/* Color swatches overlay at bottom of image - shown on hover/tap */}
-                          {activeCardId === p.id && (() => {
-                            const variations = productVariations[p.id]
-                            if (!variations || variations.length === 0) return null
-                            
-                            const currentColor = selectedColor[p.id] || p.variationAttributes?.find(attr => attr.attributeGroup === 'colour')?.attributeGroupData?.value
-                            
-                            // Get unique colors with their images
-                            const colorSet = new Set<string>()
-                            const colorData: Array<{ color: string; imageUrl?: string; tpnc: string }> = []
-                            variations.forEach(variant => {
-                              const color = variant.variationAttributes?.find(attr => attr.attributeGroup === 'colour')?.attributeGroupData?.value
-                              if (color && !colorSet.has(color)) {
-                                colorSet.add(color)
-                                colorData.push({
-                                  color,
-                                  imageUrl: undefined, // Will be loaded when color is selected
-                                  tpnc: variant.tpnc
-                                })
-                              }
-                            })
-                            
-                            return (
-                              <div className="absolute bottom-[5px] left-[5px] flex gap-1 items-center z-20">
-                                {colorData.slice(0, 3).map(({ color, imageUrl, tpnc }, idx) => {
-                                  const isSelected = color === currentColor
-                                  return (
-                                    <div
-                                      key={color}
-                                      className={`w-[32px] h-[40px] flex flex-col gap-1 items-start justify-center cursor-pointer pointer-events-auto ${
-                                        idx === 0 ? 'z-[3]' : idx === 1 ? 'z-[2]' : 'z-[1]'
-                                      }`}
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        setSelectedColor(prev => ({ ...prev, [p.id]: color }))
-                                        fetchVariantImages(p.id, tpnc)
-                                      }}
-                                    >
-                                      <div className={`w-full h-full border ${isSelected ? 'border-2 border-black' : 'border border-black'} bg-white overflow-hidden relative`}>
-                                        {imageUrl && (
-                                          <img src={imageUrl} alt={color} className="w-full h-full object-cover" />
-                                        )}
-                                      </div>
-                                    </div>
-                                  )
-                                })}
-                              </div>
-                            )
-                          })()}
                           
                           {/* Info overlay - on top of other cards, shown on hover/tap */}
                           {activeCardId === p.id && (() => {
@@ -1462,22 +1486,22 @@ export default function Search() {
                               <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 shadow-lg z-50">
                                 <div className="p-[8px] flex gap-1 items-start justify-center w-full">
                                   <div className="flex-1 flex flex-col gap-1 items-start min-w-0">
-                                    {/* Title */}
+                                        {/* Title */}
                                     <p className="text-[12px] leading-[16px] text-black font-normal overflow-ellipsis overflow-hidden w-full" style={{ fontFamily: 'FandF Sans, sans-serif' }}>
-                                      {(() => {
-                                        let title = p.title
-                                        // Remove "F&F " from start
-                                        title = title.replace(/^F&F\s+/i, '')
-                                        // Remove everything from " in" onwards
-                                        const inIndex = title.toLowerCase().indexOf(' in')
-                                        if (inIndex !== -1) {
-                                          title = title.substring(0, inIndex)
-                                        }
-                                        return title
-                                      })()}
+                                          {(() => {
+                                            let title = p.title
+                                            // Remove "F&F " from start
+                                            title = title.replace(/^F&F\s+/i, '')
+                                            // Remove everything from " in" onwards
+                                            const inIndex = title.toLowerCase().indexOf(' in')
+                                            if (inIndex !== -1) {
+                                              title = title.substring(0, inIndex)
+                                            }
+                                            return title
+                                          })()}
                                     </p>
-                                    
-                                    {/* Price */}
+                                        
+                                        {/* Price */}
                                     {(() => {
                                       const actualPrice = p.price?.actual ?? p.price?.price ?? 0
                                       const saleData = productSalePrices[p.id]
@@ -1631,12 +1655,12 @@ export default function Search() {
                                         </button>
                                       )
                                     })()}
+                                        </div>
+                                      </div>
                                   </div>
-                                </div>
-                              </div>
-                            )
-                          })()}
-                        </div>
+                              )
+                            })()}
+                          </div>
                       ) : (
                         // Regular Product Card Design
                         <>
@@ -1792,14 +1816,14 @@ export default function Search() {
                                     )
                                   } else {
                                     return (
-                                      <div className="flex items-baseline gap-2">
-                                        <span className="text-2xl font-bold text-[#333333] leading-7">
+                                <div className="flex items-baseline gap-2">
+                                  <span className="text-2xl font-bold text-[#333333] leading-7">
                                           £{actualPrice.toFixed(2)}
-                                        </span>
-                                        <span className="text-sm text-[#666666] leading-[18px]">
-                                          £3.67/kg
-                                        </span>
-                                      </div>
+                                  </span>
+                                  <span className="text-sm text-[#666666] leading-[18px]">
+                                    £3.67/kg
+                                  </span>
+                                </div>
                                     )
                                   }
                                 })()}
@@ -1849,6 +1873,99 @@ export default function Search() {
       
       {/* Product Modal */}
       {isModalOpen && <ProductModal />}
+      
+      {/* Wishlist Modal */}
+      {showWishlist && (
+        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4" onClick={() => setShowWishlist(false)}>
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-2xl font-bold text-black">My Wishlist ({wishlistCount})</h2>
+              <button
+                onClick={() => setShowWishlist(false)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2">
+                  <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+            
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {wishlistCount === 0 ? (
+                <div className="text-center py-12">
+                  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2" className="mx-auto mb-4">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                  </svg>
+                  <p className="text-gray-500 text-lg">Your wishlist is empty</p>
+                  <p className="text-gray-400 text-sm mt-2">Start adding items you love!</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {products.filter(p => wishlistItems.has(p.id)).map(p => {
+                    const { url } = getImageUrl(p)
+                    const actualPrice = p.price?.actual ?? p.price?.price ?? 0
+                    const saleData = productSalePrices[p.id]
+                    
+                    return (
+                      <div key={p.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                        {/* Image */}
+                        <div className="relative aspect-[4/5] bg-gray-100">
+                          <img src={url} alt={p.title} className="w-full h-full object-cover"/>
+                          
+                          {/* Remove from wishlist button */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              toggleWishlist(p.id)
+                            }}
+                            className="absolute top-2 right-2 p-1 bg-white/90 rounded-full hover:bg-white transition-colors"
+                          >
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2">
+                              <path d="M18 6L6 18M6 6l12 12"/>
+                            </svg>
+                          </button>
+                        </div>
+                        
+                        {/* Details */}
+                        <div className="p-3">
+                          <h3 className="text-sm font-medium text-black line-clamp-2 mb-2">
+                            {p.title}
+                          </h3>
+                          
+                          {/* Price */}
+                          {saleData ? (
+                            <div className="flex flex-col gap-1">
+                              <div className="flex gap-1 items-baseline">
+                                <p className="text-[14px] font-bold leading-[18px] text-[#e81c2d]">
+                                  Now £{actualPrice.toFixed(2)}
+                                </p>
+                                <p className="text-[12px] leading-[16px] line-through text-[#333333]">
+                                  Was £{saleData.wasPrice.toFixed(2)}
+                                </p>
+                              </div>
+                              <div className="bg-[#e81c2d] px-1 inline-flex items-center justify-center self-start">
+                                <p className="text-[12px] font-bold leading-[16px] text-white">
+                                  {saleData.discount}% OFF
+                                </p>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="text-[14px] font-bold leading-[18px] text-[#333333]">
+                              £{actualPrice.toFixed(2)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       </div>
   )
 }
