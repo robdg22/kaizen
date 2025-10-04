@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
-import type { ProductItem } from '../lib/tesco'
+import type { ProductItem, ProductVariation } from '../lib/tesco'
 import { TescoAPI } from '../lib/tesco'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
@@ -73,6 +73,8 @@ export default function Search() {
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({})
   // Track which card is expanded (zoomed) on mobile
   const [expandedCardId, setExpandedCardId] = useState<string | null>(null)
+  // Track product variations (all sizes/colors) for each product
+  const [productVariations, setProductVariations] = useState<Record<string, ProductVariation[]>>({})
 
   // Check URL for query parameter on mount
   useEffect(() => {
@@ -250,6 +252,29 @@ export default function Search() {
     })
     
     preloadedImagesRef.current.add(productId)
+  }
+
+  // Fetch product variations (all sizes/colors) when hovering/tapping a card
+  const fetchProductVariations = async (productId: string) => {
+    // Don't fetch if we already have variations for this product
+    if (productVariations[productId]) return
+    
+    try {
+      const result = await TescoAPI.getProduct({ tpnc: productId })
+      if (result.data?.product?.variations?.products) {
+        setProductVariations(prev => ({
+          ...prev,
+          [productId]: result.data!.product.variations!.products
+        }))
+      }
+    } catch (error) {
+      console.error('Failed to fetch product variations:', error)
+      // Set empty array to avoid repeated requests
+      setProductVariations(prev => ({
+        ...prev,
+        [productId]: []
+      }))
+    }
   }
 
   // Change image instantly
@@ -1008,6 +1033,11 @@ export default function Search() {
                           } else {
                             setActiveCardId(p.id)
                           }
+                          
+                          // Fetch product variations for F&F products
+                          if (isFFProduct) {
+                            fetchProductVariations(p.id)
+                          }
                         }
                         
                         // Modal disabled - only use for card activation
@@ -1036,6 +1066,11 @@ export default function Search() {
                         const images = p.media?.images || []
                         if (images.length > 0) {
                           preloadProductImages(p.id, images)
+                        }
+                        
+                        // Fetch product variations for F&F products
+                        if (isFFProduct) {
+                          fetchProductVariations(p.id)
                         }
                       }}
                       onMouseLeave={() => {
@@ -1179,7 +1214,7 @@ export default function Search() {
                                         </h3>
                                         
                                         {/* Price */}
-                                        <div className="flex items-baseline gap-2">
+                                        <div className="flex items-baseline gap-2 mb-2">
                                           <span className="text-base font-bold text-black leading-5">
                                             £{(p.price?.actual ?? p.price?.price ?? 0).toFixed(2)}
                                           </span>
@@ -1189,6 +1224,104 @@ export default function Search() {
                                             </span>
                                           )}
                                         </div>
+                                        
+                                        {/* Sizes and Colors */}
+                                        {(() => {
+                                          // Get current product's color and size
+                                          const currentColor = p.variationAttributes?.find(attr => attr.attributeGroup === 'colour')?.attributeGroupData?.value
+                                          const currentSize = p.variationAttributes?.find(attr => attr.attributeGroup === 'size')?.attributeGroupData?.value
+                                          
+                                          // Get fetched variations for this product
+                                          const variations = productVariations[p.id]
+                                          
+                                          if (!variations || variations.length === 0) return null
+                                          
+                                          // Extract unique sizes from variations and check availability
+                                          const sizeMap = new Map<string, { isAvailable: boolean }>()
+                                          variations.forEach(variant => {
+                                            const size = variant.variationAttributes?.find(attr => attr.attributeGroup === 'size')?.attributeGroupData?.value
+                                            if (size) {
+                                              const isAvailable = variant.sellers?.results?.some(s => s.isForSale && s.status === 'AvailableForSale') ?? false
+                                              sizeMap.set(size, { isAvailable })
+                                            }
+                                          })
+                                          
+                                          const sizes = Array.from(sizeMap.entries())
+                                            .map(([size, { isAvailable }]) => ({ size, isAvailable }))
+                                            .sort((a, b) => {
+                                              const numA = parseInt(a.size || '0')
+                                              const numB = parseInt(b.size || '0')
+                                              return numA - numB
+                                            })
+                                          
+                                          // Extract unique colors from variations
+                                          const colorMap = new Map<string, { isAvailable: boolean }>()
+                                          variations.forEach(variant => {
+                                            const color = variant.variationAttributes?.find(attr => attr.attributeGroup === 'colour')?.attributeGroupData?.value
+                                            if (color) {
+                                              const isAvailable = variant.sellers?.results?.some(s => s.isForSale && s.status === 'AvailableForSale') ?? false
+                                              colorMap.set(color, { isAvailable })
+                                            }
+                                          })
+                                          
+                                          const colors = Array.from(colorMap.entries())
+                                            .map(([color, { isAvailable }]) => ({ color, isAvailable }))
+                                          
+                                          if (sizes.length === 0 && colors.length === 0) return null
+                                          
+                                          return (
+                                            <div className="space-y-2">
+                                              {/* Available Colours */}
+                                              {colors.length > 0 && (
+                                                <div>
+                                                  <p className="text-xs text-gray-600 mb-1">Colour:</p>
+                                                  <div className="flex flex-wrap gap-1">
+                                                    {colors.slice(0, 5).map(({ color, isAvailable }) => (
+                                                      <span 
+                                                        key={color}
+                                                        className={`text-xs px-2 py-0.5 border rounded ${
+                                                          color === currentColor 
+                                                            ? 'border-black bg-black text-white' 
+                                                            : isAvailable
+                                                            ? 'border-gray-300 bg-white text-gray-700'
+                                                            : 'border-gray-200 bg-gray-100 text-gray-400 line-through'
+                                                        }`}
+                                                      >
+                                                        {color}
+                                                      </span>
+                                                    ))}
+                                                    {colors.length > 5 && (
+                                                      <span className="text-xs text-gray-500">+{colors.length - 5} more</span>
+                                                    )}
+                                                  </div>
+                                                </div>
+                                              )}
+                                              
+                                              {/* Available Sizes */}
+                                              {sizes.length > 0 && (
+                                                <div>
+                                                  <p className="text-xs text-gray-600 mb-1">Sizes:</p>
+                                                  <div className="flex flex-wrap gap-1">
+                                                    {sizes.map(({ size, isAvailable }) => (
+                                                      <span 
+                                                        key={size}
+                                                        className={`text-xs px-2 py-0.5 border rounded ${
+                                                          size === currentSize 
+                                                            ? 'border-black bg-black text-white' 
+                                                            : isAvailable
+                                                            ? 'border-gray-300 bg-white text-gray-700'
+                                                            : 'border-gray-200 bg-gray-100 text-gray-400 line-through'
+                                                        }`}
+                                                      >
+                                                        {size}
+                                                      </span>
+                                                    ))}
+                                                  </div>
+                                                </div>
+                                              )}
+                                            </div>
+                                          )
+                                        })()}
                                       </div>
                                   </div>
                                 </>

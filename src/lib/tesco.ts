@@ -34,6 +34,25 @@ export interface Promotion {
   offerText: string
 }
 
+export interface VariationAttribute {
+  name: string
+  value: string
+  __typename?: string
+}
+
+export interface AttributeGroupData {
+  name: string
+  value: string
+  attributes: VariationAttribute[]
+  __typename?: string
+}
+
+export interface VariationAttributeType {
+  attributeGroup: string  // "colour" or "size"
+  attributeGroupData: AttributeGroupData
+  __typename?: string
+}
+
 export interface ProductItem {
   id: string
   baseProductId: string
@@ -56,6 +75,7 @@ export interface ProductItem {
     unitOfMeasure: string
   }
   promotions?: Promotion[]
+  variationAttributes?: VariationAttributeType[]
 }
 
 export interface PageInformation {
@@ -81,6 +101,30 @@ export interface SearchProductsResponse {
   search: {
     pageInformation: PageInformation
     productItems: ProductItem[]
+  }
+}
+
+export interface ProductVariation {
+  id: string
+  tpnc: string
+  title: string
+  variationAttributes?: VariationAttributeType[]
+  sellers?: {
+    results: Array<{
+      isForSale: boolean
+      status: string
+    }>
+  }
+}
+
+export interface GetProductResponse {
+  product: {
+    id: string
+    baseProductId: string
+    title: string
+    variations?: {
+      products: ProductVariation[]
+    }
   }
 }
 
@@ -297,6 +341,17 @@ fragment ProductItem on ProductInterface {
   substitutionOptions {
     isBlocked
   }
+  variationAttributes {
+    attributeGroup
+    attributeGroupData {
+      name
+      value
+      attributes {
+        name
+        value
+      }
+    }
+  }
 }
 
 fragment FacetLists on ProductListFacetGroupInterface {
@@ -346,6 +401,40 @@ query GetCategoryProducts($categoryId: ID, $page: Int, $count: Int, $sortBy: Str
       promotions { id promotionType startDate endDate description }
     }
   }
+}
+`
+
+export const GET_PRODUCT_QUERY = `#graphql
+query GetProduct($tpnc: String!) {
+  product(tpnc: $tpnc) {
+    id
+    baseProductId
+    title
+    variations {
+      products {
+        id
+        tpnc
+        title
+        variationAttributes {
+          attributeGroup
+          attributeGroupData {
+            name
+            value
+            attributes {
+              name
+              value
+            }
+          }
+        }
+        sellers {
+          results {
+            isForSale
+            status
+          }
+        }
+      }
+    }
+  }
 }`
 
 export interface FilterCriteria {
@@ -386,6 +475,13 @@ export class TescoAPI {
       offers: options.offers ?? false,
     }
     return graphqlRequest<GetCategoryProductsResponse>(CATEGORY_PRODUCTS_QUERY, variables, this.proxyUrl)
+  }
+
+  static async getProduct(options: { tpnc: string }) {
+    const variables = {
+      tpnc: options.tpnc,
+    }
+    return graphqlRequest<GetProductResponse>(GET_PRODUCT_QUERY, variables, this.proxyUrl)
   }
 }
 
