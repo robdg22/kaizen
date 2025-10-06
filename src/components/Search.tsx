@@ -1,8 +1,12 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
-import type { ProductItem, ProductVariation } from '../lib/tesco'
+import type { ProductItem, ProductVariation, ShoppingMode } from '../lib/tesco'
 import { TescoAPI } from '../lib/tesco'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
+import TescoHeader from './TescoHeader'
+import FnFHeader from './FnFHeader'
+import TescoProductCard from './TescoProductCard'
+import FnFContainer from './FnFContainer'
 
 // Rolling currency display for basket total (train timetable effect)
 function RollingCurrency({ value }: { value: number }) {
@@ -44,6 +48,12 @@ export default function Search() {
   const [error, setError] = useState<string | null>(null)
   const [products, setProducts] = useState<ProductItem[]>([])
   const [hasSearched, setHasSearched] = useState(false)
+  
+  // Mode state: 'tesco' or 'fnf'
+  const [mode, setMode] = useState<ShoppingMode>('tesco')
+  // Separate product arrays for Tesco mode
+  const [groceryProducts, setGroceryProducts] = useState<ProductItem[]>([])
+  const [clothingProducts, setClothingProducts] = useState<ProductItem[]>([])
   const [isHeaderVisible, setIsHeaderVisible] = useState(true)
   // Track mock sale prices for products
   const [productSalePrices, setProductSalePrices] = useState<Record<string, { wasPrice: number; discount: number }>>({})
@@ -91,26 +101,51 @@ export default function Search() {
     size: string
     price: number
     imageUrl: string
+    isClothing: boolean
   }>>([])
   // Track which products just added to basket (for checkmark animation)
   const [justAdded, setJustAdded] = useState<Record<string, boolean>>({})
   // Track wishlist items
   const [wishlistItems, setWishlistItems] = useState<Set<string>>(new Set())
   const [showWishlist, setShowWishlist] = useState(false)
+  const [showBasket, setShowBasket] = useState(false)
   
   // Derive wishlist count from the Set size
   const wishlistCount = wishlistItems.size
+  
+  // Compute basket counts by type
+  const clothingItems = basketItems.filter(item => item.isClothing)
+  const groceryItems = basketItems.filter(item => !item.isClothing)
+  const displayBasketCount = mode === 'fnf' ? clothingItems.length : basketCount
 
-  // Check URL for query parameter on mount
+  // Initialize mode from localStorage and URL on mount
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
+    const urlMode = params.get('mode') as ShoppingMode | null
+    const storedMode = localStorage.getItem('shoppingMode') as ShoppingMode | null
+    
+    // Priority: URL param > localStorage > default 'tesco'
+    const initialMode = urlMode || storedMode || 'tesco'
+    setMode(initialMode)
+    
     const urlQuery = params.get('q')
     if (urlQuery) {
       setQuery(urlQuery)
-      // Automatically perform search
+      // Automatically perform search with the determined mode
       performSearchWithQuery(urlQuery)
     }
   }, [])
+  
+  // Sync mode to localStorage and URL when it changes
+  useEffect(() => {
+    localStorage.setItem('shoppingMode', mode)
+    const params = new URLSearchParams(window.location.search)
+    params.set('mode', mode)
+    if (query) {
+      params.set('q', query)
+    }
+    window.history.replaceState({}, '', `${window.location.pathname}?${params}`)
+  }, [mode])
 
   // Close active card when clicking outside
   useEffect(() => {
@@ -216,26 +251,32 @@ export default function Search() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isModalOpen, selectedProductIndex])
 
-  async function performSearchWithQuery(searchQuery: string) {
+  async function performSearchWithQuery(searchQuery: string, searchMode?: ShoppingMode) {
     if (searchQuery.trim().length <= 1) return
+    const currentMode = searchMode || mode
     setIsLoading(true)
     setError(null)
     setHasSearched(true)
     setProducts([]) // Clear previous results to show skeleton immediately
+    setGroceryProducts([])
+    setClothingProducts([])
     
     // Always load 40 products regardless of viewport
     const productCount = 40
     
-    // Filter to clothing products only
+    // Conditionally add clothing filter only in F&F mode
+    const filterCriteria = currentMode === 'fnf' ? [{
+      name: "superDepartment",
+      values: ["Clothing & Accessories"]
+    }] : undefined
+    
     const result = await TescoAPI.searchProducts({ 
       query: searchQuery, 
       count: productCount, 
       page: 0, 
-      filterCriteria: [{
-        name: "superDepartment",
-        values: ["Clothing & Accessories"]
-      }]
+      filterCriteria
     })
+    
     if (result.errors) {
       setError(result.errors[0]?.message ?? 'Unknown error')
       setProducts([])
@@ -245,7 +286,33 @@ export default function Search() {
       // Types ensure access below is correct
       // @ts-expect-error narrow by known shape
       const items = result.data.search?.productItems || result.data.search?.products || []
-      setProducts(items as ProductItem[])
+      
+      if (currentMode === 'fnf') {
+        // F&F mode: all products should be clothing, but filter to be safe
+        const clothingOnly = items.filter((item: ProductItem) => 
+          item.superDepartmentName === 'Clothing & Accessories' ||
+          item.brandName?.toLowerCase().includes('f&f') ||
+          item.brandName?.toLowerCase().includes('florence')
+        )
+        setProducts(clothingOnly as ProductItem[])
+      } else {
+        // Tesco mode: separate into clothing and grocery
+        const clothing: ProductItem[] = []
+        const grocery: ProductItem[] = []
+        
+        items.forEach((item: ProductItem) => {
+          if (item.superDepartmentName === 'Clothing & Accessories') {
+            clothing.push(item)
+          } else {
+            grocery.push(item)
+          }
+        })
+        
+        setClothingProducts(clothing)
+        setGroceryProducts(grocery)
+        // Also set products for backwards compatibility with F&F features
+        setProducts(items as ProductItem[])
+      }
       
       // Generate mock sale prices for random products
       const salePrices = generateSalePrices(items as ProductItem[])
@@ -259,9 +326,24 @@ export default function Search() {
     // Update URL with query parameter
     const params = new URLSearchParams(window.location.search)
     params.set('q', query)
+    params.set('mode', mode)
     window.history.pushState({}, '', `${window.location.pathname}?${params}`)
     
     await performSearchWithQuery(query)
+  }
+  
+  // Mode switch handler
+  const switchMode = async (newMode: ShoppingMode) => {
+    setMode(newMode)
+    // Clear products immediately to prevent showing wrong products
+    setProducts([])
+    setGroceryProducts([])
+    setClothingProducts([])
+    
+    // Re-run search if we have a query, passing the new mode explicitly
+    if (query && hasSearched) {
+      await performSearchWithQuery(query, newMode)
+    }
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -381,7 +463,8 @@ export default function Search() {
       color,
       size,
       price,
-      imageUrl
+      imageUrl,
+      isClothing: true
     }
     
     // Add to basket items array
@@ -810,10 +893,40 @@ export default function Search() {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Header - Responsive design */}
-      <div className={`fixed top-0 left-0 right-0 z-50 bg-white transition-transform duration-300 ease-out ${
-        isHeaderVisible ? 'transform translate-y-0' : 'transform -translate-y-full'
-      }`}>
+      {/* Header - New Dual Mode Headers */}
+      {mode === 'tesco' ? (
+        <TescoHeader
+          basketTotal={basketTotal}
+          basketCount={displayBasketCount}
+          onSearch={performSearch}
+          onModeSwitch={() => switchMode('fnf')}
+          searchQuery={query}
+          onQueryChange={setQuery}
+          isVisible={isHeaderVisible}
+          onBasketClick={() => setShowBasket(true)}
+        />
+      ) : (
+        <FnFHeader
+          basketTotal={basketTotal}
+          basketCount={displayBasketCount}
+          wishlistCount={wishlistCount}
+          onSearch={performSearch}
+          onModeSwitch={() => switchMode('tesco')}
+          onWishlistClick={() => setShowWishlist(true)}
+          searchQuery={query}
+          onQueryChange={setQuery}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          hasSearched={hasSearched}
+          isVisible={isHeaderVisible}
+          onBasketClick={() => setShowBasket(true)}
+        />
+      )}
+
+      {/* Legacy Header kept for mobile view in F&F mode with existing features */}
+      <div className={`fixed top-0 left-0 right-0 z-40 bg-white transition-transform duration-300 ease-out ${
+        isHeaderVisible && mode === 'fnf' ? 'transform translate-y-0' : 'transform -translate-y-full'
+      } xs:hidden`}>
         {/* Mobile Header */}
         <div className="xs:hidden">
           {(() => {
@@ -1183,8 +1296,8 @@ export default function Search() {
         </div>
       </div>
 
-      {/* Content Container with padding for fixed header */}
-      <div className="pt-[170px]">
+      {/* Content Container */}
+      <div>
         {/* Results Section - Only show after search */}
         {hasSearched && (() => {
           
@@ -1212,16 +1325,78 @@ export default function Search() {
                 </div>
               )}
 
-              {!isLoading && products.length === 0 && query.trim() && (
+              {!isLoading && (mode === 'tesco' ? (groceryProducts.length === 0 && clothingProducts.length === 0) : products.length === 0) && query.trim() && (
                 <p className="text-gray-600 text-center py-8">No products found for "{query}"</p>
               )}
 
-              {!isLoading && products.length > 0 && (
+              {!isLoading && (mode === 'tesco' ? (groceryProducts.length > 0 || clothingProducts.length > 0) : products.length > 0) && (
               <>
-                <div className={`flex flex-wrap transition-all duration-500 ease-in-out ${
-                  viewMode === 'zoomIn' ? 'gap-0' : 'gap-0'
-                }`}>
-                {products.map((p) => {
+                {mode === 'tesco' ? (
+                  // Tesco Mode: Show grocery grid with F&F container (8 tiles per row at desktop)
+                  <div className="px-8">
+                    <div className="flex flex-wrap gap-0">
+                    {groceryProducts.slice(0, 8).map((p) => (
+                      <div key={p.id} className="w-1/2 sm:w-1/3 md:w-1/4 lg:w-1/6 xl:w-[12.5%] 2xl:w-[12.5%] flex">
+                      <TescoProductCard
+                        product={p}
+                        onAddToBasket={() => {
+                          setBasketItems(prev => [...prev, {
+                            id: p.id,
+                            tpnc: p.id,
+                            title: p.title,
+                            color: '',
+                            size: '',
+                            price: p.price?.actual || p.price?.price || 0,
+                            imageUrl: p.media?.defaultImage?.url || p.defaultImageUrl || '',
+                            isClothing: false
+                          }])
+                          setBasketCount(prev => prev + 1)
+                          setBasketTotal(prev => prev + (p.price?.actual || p.price?.price || 0))
+                        }}
+                      />
+                      </div>
+                    ))}
+                    
+                    {/* Inject F&F container after row 1 (8 products) - full width */}
+                    {clothingProducts.length > 0 && (
+                      <div className="w-full">
+                        <FnFContainer
+                          products={clothingProducts}
+                          totalCount={clothingProducts.length}
+                          onSwitchToFnF={() => switchMode('fnf')}
+                        />
+                      </div>
+                    )}
+                    
+                    {groceryProducts.slice(8).map((p) => (
+                      <div key={p.id} className="w-1/2 sm:w-1/3 md:w-1/4 lg:w-1/6 xl:w-[12.5%] 2xl:w-[12.5%] flex">
+                      <TescoProductCard
+                        product={p}
+                        onAddToBasket={() => {
+                          setBasketItems(prev => [...prev, {
+                            id: p.id,
+                            tpnc: p.id,
+                            title: p.title,
+                            color: '',
+                            size: '',
+                            price: p.price?.actual || p.price?.price || 0,
+                            imageUrl: p.media?.defaultImage?.url || p.defaultImageUrl || '',
+                            isClothing: false
+                          }])
+                          setBasketCount(prev => prev + 1)
+                          setBasketTotal(prev => prev + (p.price?.actual || p.price?.price || 0))
+                        }}
+                      />
+                      </div>
+                    ))}
+                    </div>
+                  </div>
+                ) : (
+                  // F&F Mode: Keep existing implementation
+                  <div className={`flex flex-wrap transition-all duration-500 ease-in-out ${
+                    viewMode === 'zoomIn' ? 'gap-0' : 'gap-0'
+                  }`}>
+                  {products.map((p) => {
                   // Generate realistic rating data based on product ID
                   const productHash = p.id.split('').reduce((a, b) => a + b.charCodeAt(0), 0)
                   const rating = (3.0 + (productHash % 20) / 10).toFixed(1) // 3.0 - 5.0
@@ -1936,6 +2111,7 @@ export default function Search() {
               )
                 })}
               </div>
+                )}
               </>
             )}
                   </div>
@@ -2032,6 +2208,175 @@ export default function Search() {
                       </div>
                     )
                   })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Basket Modal */}
+      {showBasket && (
+        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4" onClick={() => setShowBasket(false)}>
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-2xl font-bold text-black">My Basket</h2>
+              <button
+                onClick={() => setShowBasket(false)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2">
+                  <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+            
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {basketCount === 0 ? (
+                <div className="text-center py-12">
+                  <svg width="64" height="64" viewBox="0 0 64 64" fill="none" className="mx-auto mb-4">
+                    <path d="M18.5 46.5V32.5H20.5V46.5H18.5Z" fill="#ccc"/>
+                    <path d="M28 46.5V32.5H30V46.5H28Z" fill="#ccc"/>
+                    <path d="M37.5 32.5V46.5H39.5V32.5H37.5Z" fill="#ccc"/>
+                    <path fillRule="evenodd" clipRule="evenodd" d="M45.6 12L33.5 24H58L52.5 54H11.5L6 24H33L45.6 12ZM10 52L14.5 26H53.5L49 52H10Z" fill="#ccc"/>
+                  </svg>
+                  <p className="text-gray-500 text-lg">Your basket is empty</p>
+                  <p className="text-gray-400 text-sm mt-2">Start adding items to see them here!</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Tesco Mode: Show both sections */}
+                  {mode === 'tesco' ? (
+                    <>
+                      {/* Grocery Items Section */}
+                      {groceryItems.length > 0 && (
+                        <div className="border-2 border-[#00539f] rounded-lg p-4">
+                          <h3 className="text-lg font-bold text-[#00539f] mb-4">
+                            Grocery Items ({groceryItems.length})
+                          </h3>
+                          <div className="space-y-3 mb-4">
+                            {groceryItems.map((item) => (
+                              <div key={item.id} className="flex gap-4 border-b border-gray-200 pb-3 last:border-0">
+                                <img src={item.imageUrl} alt={item.title} className="w-20 h-20 object-cover rounded"/>
+                                <div className="flex-1">
+                                  <h4 className="font-medium text-sm text-black">{item.title}</h4>
+                                  <p className="text-sm text-gray-600 mt-1">£{item.price.toFixed(2)}</p>
+                                </div>
+                                <button
+                                  onClick={() => setBasketItems(prev => prev.filter(i => i.id !== item.id))}
+                                  className="text-red-600 hover:text-red-800 p-1"
+                                >
+                                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M18 6L6 18M6 6l12 12"/>
+                                  </svg>
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="flex items-center justify-between pt-3 border-t border-gray-300">
+                            <p className="font-bold text-lg text-black">
+                              Subtotal: £{groceryItems.reduce((sum, item) => sum + item.price, 0).toFixed(2)}
+                            </p>
+                            <button className="bg-[#00539f] text-white px-6 py-3 rounded-full font-bold hover:bg-[#004080] transition-colors">
+                              Checkout Groceries
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* F&F Items Section */}
+                      {clothingItems.length > 0 && (
+                        <div className="border-2 border-black rounded-lg p-4">
+                          <h3 className="text-lg font-bold text-black mb-4">
+                            F&F Clothing ({clothingItems.length})
+                          </h3>
+                          <div className="space-y-3 mb-4">
+                            {clothingItems.map((item) => (
+                              <div key={item.id} className="flex gap-4 border-b border-gray-200 pb-3 last:border-0">
+                                <img src={item.imageUrl} alt={item.title} className="w-20 h-20 object-cover rounded"/>
+                                <div className="flex-1">
+                                  <h4 className="font-medium text-sm text-black">{item.title}</h4>
+                                  <p className="text-xs text-gray-600">Colour: {item.color}</p>
+                                  <p className="text-xs text-gray-600">Size: {item.size}</p>
+                                  <p className="text-sm text-gray-600 mt-1">£{item.price.toFixed(2)}</p>
+                                </div>
+                                <button
+                                  onClick={() => setBasketItems(prev => prev.filter(i => i.id !== item.id))}
+                                  className="text-red-600 hover:text-red-800 p-1"
+                                >
+                                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M18 6L6 18M6 6l12 12"/>
+                                  </svg>
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="flex items-center justify-between pt-3 border-t border-gray-300">
+                            <p className="font-bold text-lg text-black">
+                              Subtotal: £{clothingItems.reduce((sum, item) => sum + item.price, 0).toFixed(2)}
+                            </p>
+                            <button className="bg-black text-white px-6 py-3 rounded-full font-bold hover:bg-gray-800 transition-colors">
+                              Checkout F&F
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    /* F&F Mode: Show only F&F items */
+                    <>
+                      {clothingItems.length > 0 && (
+                        <div className="border-2 border-black rounded-lg p-4">
+                          <h3 className="text-lg font-bold text-black mb-4">
+                            F&F Clothing ({clothingItems.length})
+                          </h3>
+                          <div className="space-y-3 mb-4">
+                            {clothingItems.map((item) => (
+                              <div key={item.id} className="flex gap-4 border-b border-gray-200 pb-3 last:border-0">
+                                <img src={item.imageUrl} alt={item.title} className="w-20 h-20 object-cover rounded"/>
+                                <div className="flex-1">
+                                  <h4 className="font-medium text-sm text-black">{item.title}</h4>
+                                  <p className="text-xs text-gray-600">Colour: {item.color}</p>
+                                  <p className="text-xs text-gray-600">Size: {item.size}</p>
+                                  <p className="text-sm text-gray-600 mt-1">£{item.price.toFixed(2)}</p>
+                                </div>
+                                <button
+                                  onClick={() => setBasketItems(prev => prev.filter(i => i.id !== item.id))}
+                                  className="text-red-600 hover:text-red-800 p-1"
+                                >
+                                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M18 6L6 18M6 6l12 12"/>
+                                  </svg>
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="flex items-center justify-between pt-3 border-t border-gray-300">
+                            <p className="font-bold text-lg text-black">
+                              Subtotal: £{clothingItems.reduce((sum, item) => sum + item.price, 0).toFixed(2)}
+                            </p>
+                            <button className="bg-black text-white px-6 py-3 rounded-full font-bold hover:bg-gray-800 transition-colors">
+                              Checkout
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Message about grocery items if any */}
+                      {groceryItems.length > 0 && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+                          <p className="text-[#00539f] font-medium">
+                            You have {groceryItems.length} grocery {groceryItems.length === 1 ? 'item' : 'items'} in your basket
+                          </p>
+                          <p className="text-sm text-gray-600 mt-1">
+                            Switch to Tesco mode to view and checkout your grocery items
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               )}
             </div>

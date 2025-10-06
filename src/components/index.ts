@@ -1,3 +1,7 @@
 export { default as Button } from './Button'
 export { default as Card } from './Card'
 export { default as Layout } from './Layout'
+export { default as TescoHeader } from './TescoHeader'
+export { default as FnFHeader } from './FnFHeader'
+export { default as TescoProductCard } from './TescoProductCard'
+export { default as FnFContainer } from './FnFContainer'

@@ -1,5 +1,7 @@
 // Tesco Shopping Experience API client and GraphQL queries
 
+export type ShoppingMode = 'tesco' | 'fnf'
+
 export interface GraphQLResponse<T> {
   data?: T
   errors?: Array<{ message: string }>
@@ -60,6 +62,8 @@ export interface ProductItem {
   brandName: string
   shortDescription: string
   defaultImageUrl: string
+  superDepartmentName?: string
+  departmentName?: string
   media?: {
     defaultImage?: { url: string; aspectRatio?: number | string }
     images?: Array<{ url: string; aspectRatio?: number | string }>
