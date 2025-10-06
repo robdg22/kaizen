@@ -78,6 +78,13 @@ export interface ProductItem {
     unitPrice: string
     unitOfMeasure: string
   }
+  reviews?: {
+    stats?: {
+      noOfReviews?: number
+      overallRating?: number
+      overallRatingRange?: number
+    }
+  }
   promotions?: Promotion[]
   variationAttributes?: VariationAttributeType[]
 }

@@ -12,6 +12,18 @@ export default function TescoProductCard({ product, onAddToBasket }: TescoProduc
   // Get product price
   const price = product.price?.actual || product.price?.price || 0
   const unitPrice = product.price?.unitPrice || ''
+  const unitOfMeasure = product.price?.unitOfMeasure || ''
+  
+  // Get review data
+  const reviewCount = product.reviews?.stats?.noOfReviews || 0
+  const rating = product.reviews?.stats?.overallRating || 0
+  const starCount = Math.floor(rating)
+  
+  // Determine if unit price should be shown
+  // Don't show if: no unit price, unit is "each", or unit price is same as actual price
+  const showUnitPrice = unitPrice && 
+                        unitOfMeasure.toLowerCase() !== 'each' && 
+                        unitPrice !== `£${price.toFixed(2)}`
 
   return (
     <div className="bg-white border border-[#cccccc] flex flex-col gap-[12px] p-[16px] w-full h-full">
@@ -35,21 +47,23 @@ export default function TescoProductCard({ product, onAddToBasket }: TescoProduc
           </p>
         </div>
 
-        {/* Rating - Placeholder for now */}
-        <div className="flex gap-[8px] items-center w-full">
-          <div className="flex gap-[4px] items-start">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <div key={star} className="w-[12px] h-[12px]">
-                <svg viewBox="0 0 12 12" fill="#FCD700">
-                  <path d="M6 1L7.545 4.13L11 4.635L8.5 7.07L9.09 10.5L6 8.885L2.91 10.5L3.5 7.07L1 4.635L4.455 4.13L6 1Z"/>
-                </svg>
-              </div>
-            ))}
+        {/* Rating */}
+        {reviewCount > 0 && (
+          <div className="flex gap-[8px] items-center w-full">
+            <div className="flex gap-[4px] items-start">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <div key={star} className="w-[12px] h-[12px]">
+                  <svg viewBox="0 0 12 12" fill={star <= starCount ? "#FCD700" : "#E0E0E0"}>
+                    <path d="M6 1L7.545 4.13L11 4.635L8.5 7.07L9.09 10.5L6 8.885L2.91 10.5L3.5 7.07L1 4.635L4.455 4.13L6 1Z"/>
+                  </svg>
+                </div>
+              ))}
+            </div>
+            <p className="font-['Tesco_Modern'] text-[14px] leading-[18px] text-[#666666]">
+              {rating.toFixed(1)} ({reviewCount})
+            </p>
           </div>
-          <p className="font-['Tesco_Modern'] text-[14px] leading-[18px] text-[#666666]">
-            4.5 (10)
-          </p>
-        </div>
+        )}
 
         {/* Rest of shelf link */}
         <div className="flex gap-[4px] h-[18px] items-end w-full">
@@ -71,9 +85,9 @@ export default function TescoProductCard({ product, onAddToBasket }: TescoProduc
             <p className="font-['Tesco_Modern'] font-bold text-[14px] leading-[18px] text-[#333333]">
               £{price.toFixed(2)}
             </p>
-            {unitPrice && (
+            {showUnitPrice && (
               <p className="font-['Tesco_Modern'] text-[12px] leading-[16px] text-[#666666]">
-                {unitPrice}
+                {unitPrice}/{unitOfMeasure}
               </p>
             )}
           </div>
