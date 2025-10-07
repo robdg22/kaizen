@@ -5,23 +5,27 @@ import SearchIcon from '../../assets/icons/Property header/Icon buttons/24px Ico
 interface TescoHeaderProps {
   basketTotal: number
   basketCount: number
+  wishlistCount: number
   onSearch: (query: string) => void
   onModeSwitch: () => void
   searchQuery: string
   onQueryChange: (query: string) => void
   isVisible?: boolean
   onBasketClick: () => void
+  onWishlistClick: () => void
 }
 
 export default function TescoHeader({ 
   basketTotal,
   basketCount,
+  wishlistCount,
   onSearch, 
   onModeSwitch, 
   searchQuery, 
   onQueryChange,
   isVisible = true,
-  onBasketClick
+  onBasketClick,
+  onWishlistClick
 }: TescoHeaderProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -101,9 +105,24 @@ export default function TescoHeader({
           </form>
         </div>
 
-        {/* Basket */}
-        <button onClick={onBasketClick} className="flex gap-[24px] items-start justify-end hover:opacity-80 transition-opacity">
-          <div className="flex items-center gap-[8px]">
+        {/* Wishlist and Basket */}
+        <div className="flex gap-[12px] items-center">
+          {/* Wishlist */}
+          <button onClick={onWishlistClick} className="hover:opacity-80 transition-opacity">
+            <div className="bg-[#E81C2D] rounded-[20px] p-[8px] relative">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="white" stroke="white" strokeWidth="2" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+              </svg>
+              {wishlistCount > 0 && (
+                <div className="absolute -top-1 -right-1 bg-white text-[#E81C2D] text-[11px] leading-[11px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center">
+                  {wishlistCount}
+                </div>
+              )}
+            </div>
+          </button>
+
+          {/* Basket */}
+          <button onClick={onBasketClick} className="flex items-center gap-[8px] hover:opacity-80 transition-opacity">
             <div className="bg-[#00539f] rounded-[20px] p-[8px] relative">
               <img src={BasketIcon} alt="Basket" width="24" height="24" />
               {basketCount > 0 && (
@@ -115,8 +134,8 @@ export default function TescoHeader({
             <div className="flex flex-col items-start justify-center">
               <p className="font-['Tesco_Modern'] font-bold text-[16px] leading-[20px] text-[#00539f] text-nowrap">£{basketTotal.toFixed(2)}</p>
             </div>
-          </div>
-        </button>
+          </button>
+        </div>
       </div>
 
       {/* Local Navigation */}

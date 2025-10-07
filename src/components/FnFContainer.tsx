@@ -5,9 +5,10 @@ interface FnFContainerProps {
   products: ProductItem[]
   totalCount: number
   onSwitchToFnF: () => void
+  onAddToWishlist: (product: ProductItem) => void
 }
 
-export default function FnFContainer({ products, totalCount, onSwitchToFnF }: FnFContainerProps) {
+export default function FnFContainer({ products, totalCount, onSwitchToFnF, onAddToWishlist }: FnFContainerProps) {
   // Show up to 16 products
   const displayProducts = products.slice(0, 16)
 
@@ -46,7 +47,10 @@ export default function FnFContainer({ products, totalCount, onSwitchToFnF }: Fn
                 />
                 {/* Wishlist button */}
                 <button
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onAddToWishlist(product)
+                  }}
                   className="absolute top-[8px] right-[8px] z-[2] p-1 bg-white rounded-full hover:scale-110 active:scale-95 transition-transform"
                 >
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2" xmlns="http://www.w3.org/2000/svg">
