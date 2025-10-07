@@ -1,8 +1,12 @@
 import Search from './components/Search'
+import Footer from './components/Footer'
 
 function App() {
   return (
-    <Search />
+    <div className="min-h-screen flex flex-col">
+      <Search />
+      <Footer />
+    </div>
   )
 }
 
