@@ -1508,7 +1508,7 @@ export default function Search() {
                   <div className={`flex flex-wrap transition-all duration-500 ease-in-out ${
                     viewMode === 'zoomIn' ? 'gap-0' : 'gap-0'
                   }`}>
-                  {products.map((p) => {
+                  {clothingProducts.map((p) => {
                   // Generate realistic rating data based on product ID
                   const productHash = p.id.split('').reduce((a, b) => a + b.charCodeAt(0), 0)
                   const rating = (3.0 + (productHash % 20) / 10).toFixed(1) // 3.0 - 5.0
