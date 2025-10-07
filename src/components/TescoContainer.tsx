@@ -29,7 +29,7 @@ export default function TescoContainer({ products, totalCount, onAddToBasket }: 
       </div>
 
       {/* Product grid - Responsive: 2 cols mobile, 4 cols tablet, 8 cols desktop */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-[4px] sm:gap-[12px] items-start">
+      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-[4px] sm:gap-[12px] items-start">
         {displayProducts.map((product) => (
           <TescoProductCard
             key={`tesco-${product.id}`}

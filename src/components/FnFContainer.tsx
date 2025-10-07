@@ -28,7 +28,7 @@ export default function FnFContainer({ products, totalCount, onSwitchToFnF, onAd
       </div>
 
       {/* Product grid - Responsive: 2 cols mobile, 4 cols tablet, 8 cols desktop */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-[4px] sm:gap-0 items-start">
+      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-[4px] sm:gap-0 items-start">
         {displayProducts.map((product) => {
           const imageUrl = product.media?.defaultImage?.url || product.defaultImageUrl || product.images?.display?.default?.url || ''
           const price = product.price?.actual || product.price?.price || 0
