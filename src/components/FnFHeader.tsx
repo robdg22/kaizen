@@ -45,27 +45,27 @@ export default function FnFHeader({
     <div className={`flex flex-col items-start w-full bg-white sticky top-0 z-[200] transition-transform duration-300 ease-out ${
       isVisible ? 'translate-y-0' : '-translate-y-full'
     }`}>
-      {/* Utility Bar - Black */}
-      <div className="bg-black w-full h-[33px] border-b border-black flex items-center justify-end">
-        <div className="bg-black border-l border-[rgba(255,255,255,0.4)] h-[32px] flex items-center justify-center px-[20px] py-[4px]">
-          <p className="font-['F&F_Sans'] font-bold text-[14px] leading-[18px] text-white text-nowrap">Store locator</p>
+      {/* Utility Bar - Black - Hidden on mobile, scrollable on tablet */}
+      <div className="bg-black w-full h-[33px] border-b border-black hidden sm:flex items-center justify-end overflow-x-auto">
+        <div className="bg-black border-l border-[rgba(255,255,255,0.4)] h-[32px] flex items-center justify-center px-[12px] sm:px-[20px] py-[4px] flex-shrink-0">
+          <p className="font-['F&F_Sans'] font-bold text-[12px] sm:text-[14px] leading-[18px] text-white text-nowrap">Store locator</p>
         </div>
-        <div className="bg-black border-l border-[rgba(255,255,255,0.4)] h-[32px] flex items-center justify-center px-[20px] py-[4px]">
-          <p className="font-['F&F_Sans'] font-bold text-[14px] leading-[18px] text-white text-nowrap">My orders</p>
+        <div className="bg-black border-l border-[rgba(255,255,255,0.4)] h-[32px] flex items-center justify-center px-[12px] sm:px-[20px] py-[4px] flex-shrink-0">
+          <p className="font-['F&F_Sans'] font-bold text-[12px] sm:text-[14px] leading-[18px] text-white text-nowrap">My orders</p>
         </div>
-        <div className="bg-black border-l border-[rgba(255,255,255,0.4)] h-[32px] flex items-center justify-center px-[20px] py-[4px]">
-          <p className="font-['F&F_Sans'] font-bold text-[14px] leading-[18px] text-white text-nowrap">Help</p>
+        <div className="bg-black border-l border-[rgba(255,255,255,0.4)] h-[32px] flex items-center justify-center px-[12px] sm:px-[20px] py-[4px] flex-shrink-0">
+          <p className="font-['F&F_Sans'] font-bold text-[12px] sm:text-[14px] leading-[18px] text-white text-nowrap">Help</p>
         </div>
-        <div className="bg-black border-l border-[rgba(255,255,255,0.4)] h-[32px] flex items-center justify-center px-[20px] py-[4px]">
-          <p className="font-['F&F_Sans'] font-bold text-[14px] leading-[18px] text-white text-nowrap">Feedback</p>
+        <div className="bg-black border-l border-[rgba(255,255,255,0.4)] h-[32px] flex items-center justify-center px-[12px] sm:px-[20px] py-[4px] flex-shrink-0">
+          <p className="font-['F&F_Sans'] font-bold text-[12px] sm:text-[14px] leading-[18px] text-white text-nowrap">Feedback</p>
         </div>
-        <div className="bg-black border-l border-[rgba(255,255,255,0.4)] h-[32px] flex items-center justify-center px-[20px] py-[4px]">
-          <p className="font-['F&F_Sans'] font-bold text-[14px] leading-[18px] text-white text-nowrap">My account</p>
+        <div className="bg-black border-l border-[rgba(255,255,255,0.4)] h-[32px] flex items-center justify-center px-[12px] sm:px-[20px] py-[4px] flex-shrink-0">
+          <p className="font-['F&F_Sans'] font-bold text-[12px] sm:text-[14px] leading-[18px] text-white text-nowrap">My account</p>
         </div>
         {/* Clickable Tesco Logo - Returns to Tesco Mode */}
         <button 
           onClick={onModeSwitch}
-          className="bg-white border-l border-[rgba(255,255,255,0.4)] h-[32px] flex items-center justify-center px-[20px] py-[4px] hover:bg-gray-100 transition-colors"
+          className="bg-white border-l border-[rgba(255,255,255,0.4)] h-[32px] flex items-center justify-center px-[12px] sm:px-[20px] py-[4px] hover:bg-gray-100 transition-colors flex-shrink-0"
           title="Return to Tesco"
         >
           <img src={TescoLogo} alt="Tesco" width="53" height="16" />
@@ -73,113 +73,117 @@ export default function FnFHeader({
       </div>
 
       {/* Main Header */}
-      <div className="flex gap-[24px] items-center px-[12px] py-0 w-full">
+      <div className="flex flex-col sm:flex-row gap-[12px] sm:gap-[24px] items-stretch sm:items-center px-[8px] sm:px-[12px] py-[8px] sm:py-0 w-full">
         {/* Logo and Search */}
-        <div className="flex flex-row items-center flex-1">
-          <div className="flex gap-[24px] items-center flex-1">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center flex-1">
+          <div className="flex flex-col sm:flex-row gap-[12px] sm:gap-[24px] items-stretch sm:items-center flex-1">
             {/* F&F Logo */}
-            <img src={FnfLogo} 
-            alt="Tesco" 
-            width="120" 
-            height="36" 
-            />
+            <div className="flex items-center justify-center sm:justify-start h-[40px] sm:h-auto sm:py-2 flex-shrink-0">
+              <img src={FnfLogo} 
+              alt="F&F" 
+              width="120" 
+              height="36" 
+              className="h-[28px] sm:h-[36px] w-auto"
+              />
+            </div>
 
             {/* Search Container */}
-            <form onSubmit={handleSubmit} className="flex-1 max-w-[749px] py-[16px]">
-              <div className="flex gap-[12px] items-start w-full">
-                <div className="flex-1 flex items-center px-[12px] py-[8px] border border-[#666666] bg-white h-[40px] relative">
+            <form onSubmit={handleSubmit} className="flex-1 py-[8px] sm:py-[16px]">
+              <div className="flex gap-[8px] sm:gap-[12px] items-center w-full">
+                <div className="flex-1 flex items-center px-[8px] sm:px-[12px] py-[6px] sm:py-[8px] border border-[#666666] bg-white h-[36px] sm:h-[40px] relative">
                   <div className="flex gap-[4px] items-center flex-1">
-                    <img src={SearchIcon} alt="Search" width="24" height="24" />
+                    <img src={SearchIcon} alt="Search" width="20" height="20" className="sm:w-6 sm:h-6" />
                     <input
                       type="text"
                       value={searchQuery}
                       onChange={(e) => onQueryChange(e.target.value)}
                       placeholder="Search"
-                      className="flex-1 outline-none font-['F&F_Sans'] text-[16px] leading-[20px] text-[#666666]"
+                      className="flex-1 outline-none font-['F&F_Sans'] text-[14px] sm:text-[16px] leading-[20px] text-[#666666]"
                     />
                   </div>
                 </div>
                 <button 
                   type="submit"
-                  className="bg-black rounded-[20px] p-[8px] flex items-center justify-center hover:bg-gray-800 transition-colors"
+                  className="bg-black rounded-[18px] sm:rounded-[20px] p-[6px] sm:p-[8px] flex items-center justify-center hover:bg-gray-800 transition-colors flex-shrink-0"
                 >
-                  <img src={SearchIcon} alt="Search" width="24" height="24" />
+                  <img src={SearchIcon} alt="Search" width="20" height="20" className="sm:w-6 sm:h-6" />
                 </button>
               </div>
             </form>
           </div>
         </div>
 
-        {/* Wishlist Button */}
-        <button 
-          onClick={onWishlistClick}
-          className="bg-black rounded-[20px] p-[8px] relative hover:bg-gray-800 transition-colors"
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M20.84 4.61C20.3292 4.099 19.7228 3.69364 19.0554 3.41708C18.3879 3.14052 17.6725 2.99817 16.95 2.99817C16.2275 2.99817 15.5121 3.14052 14.8446 3.41708C14.1772 3.69364 13.5708 4.099 13.06 4.61L12 5.67L10.94 4.61C9.9083 3.57831 8.50903 2.99871 7.05 2.99871C5.59096 2.99871 4.19169 3.57831 3.16 4.61C2.1283 5.64169 1.54871 7.04097 1.54871 8.5C1.54871 9.95903 2.1283 11.3583 3.16 12.39L4.22 13.45L12 21.23L19.78 13.45L20.84 12.39C21.351 11.8792 21.7564 11.2728 22.0329 10.6054C22.3095 9.93789 22.4518 9.22248 22.4518 8.5C22.4518 7.77752 22.3095 7.06211 22.0329 6.39464C21.7564 5.72718 21.351 5.12075 20.84 4.61Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          {wishlistCount > 0 && (
-            <div className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-              {wishlistCount}
-            </div>
-          )}
-        </button>
+        {/* Wishlist and Basket */}
+        <div className="flex gap-[8px] sm:gap-[12px] items-center justify-end">
+          {/* Wishlist Button */}
+          <button 
+            onClick={onWishlistClick}
+            className="bg-black rounded-[18px] sm:rounded-[20px] p-[6px] sm:p-[8px] relative hover:bg-gray-800 transition-colors"
+          >
+            <svg width="20" height="20" className="sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none">
+              <path d="M20.84 4.61C20.3292 4.099 19.7228 3.69364 19.0554 3.41708C18.3879 3.14052 17.6725 2.99817 16.95 2.99817C16.2275 2.99817 15.5121 3.14052 14.8446 3.41708C14.1772 3.69364 13.5708 4.099 13.06 4.61L12 5.67L10.94 4.61C9.9083 3.57831 8.50903 2.99871 7.05 2.99871C5.59096 2.99871 4.19169 3.57831 3.16 4.61C2.1283 5.64169 1.54871 7.04097 1.54871 8.5C1.54871 9.95903 2.1283 11.3583 3.16 12.39L4.22 13.45L12 21.23L19.78 13.45L20.84 12.39C21.351 11.8792 21.7564 11.2728 22.0329 10.6054C22.3095 9.93789 22.4518 9.22248 22.4518 8.5C22.4518 7.77752 22.3095 7.06211 22.0329 6.39464C21.7564 5.72718 21.351 5.12075 20.84 4.61Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            {wishlistCount > 0 && (
+              <div className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] sm:text-xs leading-[10px] sm:leading-[12px] font-bold rounded-full w-[16px] sm:w-5 h-[16px] sm:h-5 flex items-center justify-center">
+                {wishlistCount}
+              </div>
+            )}
+          </button>
 
-        {/* Basket */}
-        <button onClick={onBasketClick} className="flex gap-[24px] items-start justify-end hover:opacity-80 transition-opacity">
-          <div className="flex items-center gap-[8px]">
-            <div className="bg-black rounded-[20px] p-[8px] relative">
-              <img src={BasketIcon} alt="Basket" width="24" height="24" />
+          {/* Basket */}
+          <button onClick={onBasketClick} className="flex items-center gap-[6px] sm:gap-[8px] hover:opacity-80 transition-opacity">
+            <div className="bg-black rounded-[18px] sm:rounded-[20px] p-[6px] sm:p-[8px] relative">
+              <img src={BasketIcon} alt="Basket" width="20" height="20" className="sm:w-6 sm:h-6" />
               {basketCount > 0 && (
-                <div className="absolute -top-1 -right-1 bg-[#E81C2D] text-white text-[11px] leading-[11px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center">
+                <div className="absolute -top-1 -right-1 bg-[#E81C2D] text-white text-[10px] sm:text-[11px] leading-[10px] sm:leading-[11px] font-bold rounded-full min-w-[16px] sm:min-w-[18px] h-[16px] sm:h-[18px] px-1 flex items-center justify-center">
                   {basketCount}
                 </div>
               )}
             </div>
-            <div className="flex flex-col items-start justify-center">
-              <p className="font-['F&F_Sans'] font-bold text-[16px] leading-[20px] text-black text-nowrap">£{basketTotal.toFixed(2)}</p>
+            <div className="flex flex-col items-start justify-center hidden sm:flex">
+              <p className="font-['F&F_Sans'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-black text-nowrap">£{basketTotal.toFixed(2)}</p>
             </div>
-          </div>
-        </button>
+          </button>
+        </div>
       </div>
 
-      {/* Local Navigation */}
-      <div className="bg-white flex gap-[16px] h-[44px] items-center w-full">
-        <div className="px-[8px] py-[12px]">
-          <p className="font-['F&F_Sans'] font-bold text-[16px] leading-[20px] text-black text-nowrap">WOMEN</p>
+      {/* Local Navigation - Scrollable on mobile */}
+      <div className="bg-white flex gap-[8px] sm:gap-[16px] h-[44px] items-center w-full overflow-x-auto">
+        <div className="px-[6px] sm:px-[8px] py-[12px] flex-shrink-0">
+          <p className="font-['F&F_Sans'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-black text-nowrap">WOMEN</p>
         </div>
-        <div className="px-[8px] py-[12px]">
-          <p className="font-['F&F_Sans'] font-bold text-[16px] leading-[20px] text-black text-nowrap">MEN</p>
+        <div className="px-[6px] sm:px-[8px] py-[12px] flex-shrink-0">
+          <p className="font-['F&F_Sans'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-black text-nowrap">MEN</p>
         </div>
-        <div className="px-[8px] py-[12px]">
-          <p className="font-['F&F_Sans'] font-bold text-[16px] leading-[20px] text-black text-nowrap">KIDS</p>
+        <div className="px-[6px] sm:px-[8px] py-[12px] flex-shrink-0">
+          <p className="font-['F&F_Sans'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-black text-nowrap">KIDS</p>
         </div>
-        <div className="px-[8px] py-[12px]">
-          <p className="font-['F&F_Sans'] font-bold text-[16px] leading-[20px] text-black text-nowrap">BABY</p>
+        <div className="px-[6px] sm:px-[8px] py-[12px] flex-shrink-0">
+          <p className="font-['F&F_Sans'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-black text-nowrap">BABY</p>
         </div>
-        <div className="px-[8px] py-[12px]">
-          <p className="font-['F&F_Sans'] font-bold text-[16px] leading-[20px] text-black text-nowrap">SCHOOL</p>
+        <div className="px-[6px] sm:px-[8px] py-[12px] flex-shrink-0">
+          <p className="font-['F&F_Sans'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-black text-nowrap">SCHOOL</p>
         </div>
-        <div className="px-[8px] py-[12px]">
-          <p className="font-['F&F_Sans'] font-bold text-[16px] leading-[20px] text-black text-nowrap">SPORTS</p>
+        <div className="px-[6px] sm:px-[8px] py-[12px] flex-shrink-0">
+          <p className="font-['F&F_Sans'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-black text-nowrap">SPORTS</p>
         </div>
-        <div className="px-[8px] py-[12px]">
-          <p className="font-['F&F_Sans'] font-bold text-[16px] leading-[20px] text-black text-nowrap">HOLIDAY SHOP</p>
+        <div className="px-[6px] sm:px-[8px] py-[12px] flex-shrink-0">
+          <p className="font-['F&F_Sans'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-black text-nowrap">HOLIDAY SHOP</p>
         </div>
-        <div className="px-[8px] py-[12px]">
-          <p className="font-['F&F_Sans'] font-bold text-[16px] leading-[20px] text-black text-nowrap">BRANDS</p>
+        <div className="px-[6px] sm:px-[8px] py-[12px] flex-shrink-0">
+          <p className="font-['F&F_Sans'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-black text-nowrap">BRANDS</p>
         </div>
-        <div className="px-[8px] py-[12px]">
-          <p className="font-['F&F_Sans'] font-bold text-[16px] leading-[20px] text-black text-nowrap">HOME</p>
+        <div className="px-[6px] sm:px-[8px] py-[12px] flex-shrink-0">
+          <p className="font-['F&F_Sans'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-black text-nowrap">HOME</p>
         </div>
-        <div className="px-[8px] py-[12px]">
-          <p className="font-['F&F_Sans'] font-bold text-[16px] leading-[20px] text-black text-nowrap">INSPIRE</p>
+        <div className="px-[6px] sm:px-[8px] py-[12px] flex-shrink-0">
+          <p className="font-['F&F_Sans'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-black text-nowrap">INSPIRE</p>
         </div>
-        <div className="px-[8px] py-[12px]">
-          <p className="font-['F&F_Sans'] font-bold text-[16px] leading-[20px] text-black text-nowrap">GIFTS</p>
+        <div className="px-[6px] sm:px-[8px] py-[12px] flex-shrink-0">
+          <p className="font-['F&F_Sans'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-black text-nowrap">GIFTS</p>
         </div>
-        <div className="px-[8px] py-[12px]">
-          <p className="font-['F&F_Sans'] font-bold text-[16px] leading-[20px] text-[#e81c2d] text-nowrap">SALE</p>
+        <div className="px-[6px] sm:px-[8px] py-[12px] flex-shrink-0">
+          <p className="font-['F&F_Sans'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-[#e81c2d] text-nowrap">SALE</p>
         </div>
       </div>
 

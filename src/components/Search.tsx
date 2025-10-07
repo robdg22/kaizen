@@ -1423,7 +1423,7 @@ export default function Search() {
               <>
                 {mode === 'tesco' ? (
                   // Tesco Mode: Show grocery grid with F&F container (8 tiles per row at desktop)
-                  <div className="px-8">
+                  <div className="px-4 sm:px-8">
                     <div className="flex flex-wrap gap-0">
                     {groceryProducts.slice(0, 8).map((p) => (
                       <div key={p.id} className="w-1/2 sm:w-1/3 md:w-1/4 lg:w-1/6 xl:w-[12.5%] 2xl:w-[12.5%] flex">
@@ -2236,7 +2236,7 @@ export default function Search() {
               
               {/* Tesco Container for grocery products in F&F mode */}
               {groceryProducts.length > 0 && (
-                <div className="px-8">
+                <div className="px-4 sm:px-8">
                   <TescoContainer
                     products={groceryProducts}
                     totalCount={groceryProducts.length}

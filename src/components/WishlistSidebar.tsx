@@ -43,27 +43,27 @@ export default function WishlistSidebar({ isOpen, onClose, items, onRemoveItem, 
 
       {/* Sidebar */}
       <div
-        className={`fixed top-0 right-0 h-full w-[400px] bg-white shadow-2xl transition-transform duration-300 ease-out z-[301] flex flex-col ${
+        className={`fixed top-0 right-0 h-full w-full sm:w-[400px] bg-white shadow-2xl transition-transform duration-300 ease-out z-[301] flex flex-col ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         {/* Header */}
-        <div className="bg-[#E81C2D] p-4 flex items-center justify-between">
-          <h2 className="font-['Tesco_Modern'] font-bold text-[20px] leading-[24px] text-white">
+        <div className="bg-[#E81C2D] p-[12px] sm:p-4 flex items-center justify-between">
+          <h2 className="font-['Tesco_Modern'] font-bold text-[18px] sm:text-[20px] leading-[22px] sm:leading-[24px] text-white">
             Your Wishlist
           </h2>
           <button
             onClick={onClose}
-            className="text-white hover:opacity-80 transition-opacity"
+            className="text-white hover:opacity-80 transition-opacity p-1"
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+            <svg width="20" height="20" className="sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
               <path d="M18 6L6 18M6 6l12 12" />
             </svg>
           </button>
         </div>
 
         {/* Items */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-[12px] sm:p-4">
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center">
               <svg width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="#cccccc" strokeWidth="2">

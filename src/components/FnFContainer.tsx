@@ -13,21 +13,22 @@ export default function FnFContainer({ products, totalCount, onSwitchToFnF, onAd
   const displayProducts = products.slice(0, 16)
 
   return (
-    <div className="bg-white border-2 border-black flex flex-col gap-[12px] p-[16px] col-span-4 my-[16px]">
+    <div className="bg-white border-2 border-black flex flex-col gap-[8px] sm:gap-[12px] p-[8px] sm:p-[16px] col-span-4 my-[8px] sm:my-[16px]">
       {/* Header with F&F logo and count */}
-      <div className="flex gap-[12px] items-center">
+      <div className="flex gap-[8px] sm:gap-[12px] items-center">
       <img src={FnfLogo} 
-            alt="Tesco" 
-            height="30" 
-            width="58" 
+            alt="F&F" 
+            height="24" 
+            width="46" 
+            className="sm:h-[30px] sm:w-[58px]"
             />
-        <p className="font-['F&F_Sans'] font-bold text-[20px] leading-[24px] text-black text-nowrap">
+        <p className="font-['F&F_Sans'] font-bold text-[16px] sm:text-[20px] leading-[20px] sm:leading-[24px] text-black text-nowrap">
           {totalCount} results from F&F clothing
         </p>
       </div>
 
-      {/* Product grid - 2 rows of 8 */}
-      <div className="grid grid-cols-8 gap-0 items-start">
+      {/* Product grid - Responsive: 2 cols mobile, 4 cols tablet, 8 cols desktop */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-[4px] sm:gap-0 items-start">
         {displayProducts.map((product) => {
           const imageUrl = product.media?.defaultImage?.url || product.defaultImageUrl || product.images?.display?.default?.url || ''
           const price = product.price?.actual || product.price?.price || 0
@@ -60,11 +61,11 @@ export default function FnFContainer({ products, totalCount, onSwitchToFnF, onAd
               </div>
 
               {/* Product details */}
-              <div className="flex flex-col gap-1 p-2 w-full text-left">
-                <p className="font-['F&F_Sans'] text-[14px] leading-[18px] text-black line-clamp-2">
+              <div className="flex flex-col gap-1 p-[4px] sm:p-2 w-full text-left">
+                <p className="font-['F&F_Sans'] text-[12px] sm:text-[14px] leading-[16px] sm:leading-[18px] text-black line-clamp-2">
                   {product.title}
                 </p>
-                <p className="font-['F&F_Sans'] font-bold text-[16px] leading-[20px] text-black">
+                <p className="font-['F&F_Sans'] font-bold text-[14px] sm:text-[16px] leading-[18px] sm:leading-[20px] text-black">
                   £{price.toFixed(2)}
                 </p>
               </div>
@@ -76,9 +77,9 @@ export default function FnFContainer({ products, totalCount, onSwitchToFnF, onAd
       {/* Shop F&F button */}
       <button
         onClick={onSwitchToFnF}
-        className="bg-black px-[12px] py-[6px] flex gap-[4px] items-center justify-center hover:bg-gray-800 transition-colors w-auto self-start"
+        className="bg-black px-[8px] sm:px-[12px] py-[4px] sm:py-[6px] flex gap-[4px] items-center justify-center hover:bg-gray-800 transition-colors w-auto self-start"
       >
-        <p className="font-['Tesco_Modern'] font-bold text-[16px] leading-[20px] text-white text-nowrap">
+        <p className="font-['Tesco_Modern'] font-bold text-[14px] sm:text-[16px] leading-[18px] sm:leading-[20px] text-white text-nowrap">
           SHOP F&F CLOTHING
         </p>
       </button>
