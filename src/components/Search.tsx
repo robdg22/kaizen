@@ -129,10 +129,10 @@ export default function Search() {
   // Derive wishlist count from array length
   const wishlistCount = wishlistItems.length
   
-  // Compute basket counts by type
-  const clothingItems = basketItems.filter(item => item.isClothing)
-  const groceryItems = basketItems.filter(item => !item.isClothing)
-  const displayBasketCount = mode === 'fnf' ? clothingItems.length : basketCount
+  // Compute basket count for F&F mode (only clothing items)
+  const displayBasketCount = mode === 'fnf' 
+    ? basketItems.filter(item => item.isClothing).length 
+    : basketCount
 
   // Initialize mode from localStorage and URL on mount
   useEffect(() => {
