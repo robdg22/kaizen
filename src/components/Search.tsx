@@ -126,6 +126,10 @@ export default function Search() {
   const basketTimerRef = useRef<number | null>(null)
   const wishlistTimerRef = useRef<number | null>(null)
   
+  // Container visibility state - hide containers when switching modes via container clicks
+  const [hideFnFContainer, setHideFnFContainer] = useState(false)
+  const [hideTescoContainer, setHideTescoContainer] = useState(false)
+  
   // Derive wishlist count from array length
   const wishlistCount = wishlistItems.length
   
@@ -339,15 +343,25 @@ export default function Search() {
   }
   
   // Mode switch handler
-  const switchMode = async (newMode: ShoppingMode) => {
+  const switchMode = async (newMode: ShoppingMode, clearQuery = false) => {
     setMode(newMode)
     // Clear products immediately to prevent showing wrong products
     setProducts([])
     setGroceryProducts([])
     setClothingProducts([])
     
-    // Re-run search if we have a query, passing the new mode explicitly
-    if (query && hasSearched) {
+    // Clear query if requested (when switching via header links)
+    if (clearQuery) {
+      setQuery('')
+      setHasSearched(false)
+    }
+    
+    // Reset container visibility when switching modes
+    setHideFnFContainer(false)
+    setHideTescoContainer(false)
+    
+    // Re-run search if we have a query and not clearing it, passing the new mode explicitly
+    if (query && hasSearched && !clearQuery) {
       await performSearchWithQuery(query, newMode)
     }
   }
@@ -987,7 +1001,7 @@ export default function Search() {
           basketTotal={basketTotal}
           basketCount={displayBasketCount}
           onSearch={performSearch}
-          onModeSwitch={() => switchMode('fnf')}
+          onModeSwitch={() => switchMode('fnf', true)}
           searchQuery={query}
           onQueryChange={setQuery}
           isVisible={isHeaderVisible}
@@ -1001,7 +1015,7 @@ export default function Search() {
           basketCount={displayBasketCount}
           wishlistCount={wishlistCount}
           onSearch={performSearch}
-          onModeSwitch={() => switchMode('tesco')}
+          onModeSwitch={() => switchMode('tesco', true)}
           onWishlistClick={toggleWishlistSidebar}
           searchQuery={query}
           onQueryChange={setQuery}
@@ -1458,12 +1472,15 @@ export default function Search() {
                     ))}
                     
                     {/* Inject F&F container after row 1 (8 products) - full width */}
-                    {clothingProducts.length > 0 && (
+                    {clothingProducts.length > 0 && !hideFnFContainer && (
                       <div className="w-full">
                         <FnFContainer
                           products={clothingProducts}
                           totalCount={clothingProducts.length}
-                          onSwitchToFnF={() => switchMode('fnf')}
+                          onSwitchToFnF={() => {
+                            setHideTescoContainer(true)
+                            switchMode('fnf')
+                          }}
                           onAddToWishlist={(product) => addToWishlist(product)}
                         />
                       </div>
@@ -2235,11 +2252,15 @@ export default function Search() {
               </div>
               
               {/* Tesco Container for grocery products in F&F mode */}
-              {groceryProducts.length > 0 && (
+              {groceryProducts.length > 0 && !hideTescoContainer && (
                 <div className="px-4 sm:px-8">
                   <TescoContainer
                     products={groceryProducts}
                     totalCount={groceryProducts.length}
+                    onSwitchToTesco={() => {
+                      setHideFnFContainer(true)
+                      switchMode('tesco')
+                    }}
                     onAddToBasket={(product) => {
                       const price = product.price?.actual || product.price?.price || 0
                       setBasketItems(prev => [...prev, {

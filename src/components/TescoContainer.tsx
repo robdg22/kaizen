@@ -6,9 +6,10 @@ interface TescoContainerProps {
   products: ProductItem[]
   totalCount: number
   onAddToBasket: (product: ProductItem) => void
+  onSwitchToTesco?: () => void
 }
 
-export default function TescoContainer({ products, totalCount, onAddToBasket }: TescoContainerProps) {
+export default function TescoContainer({ products, totalCount, onAddToBasket, onSwitchToTesco }: TescoContainerProps) {
   // Show up to 16 products in a grid
   const displayProducts = products.slice(0, 16)
 
@@ -38,6 +39,18 @@ export default function TescoContainer({ products, totalCount, onAddToBasket }: 
           />
         ))}
       </div>
+
+      {/* Shop Tesco button - only show if onSwitchToTesco is provided */}
+      {onSwitchToTesco && (
+        <button
+          onClick={onSwitchToTesco}
+          className="bg-[#00539f] px-[8px] sm:px-[12px] py-[4px] sm:py-[6px] flex gap-[4px] items-center justify-center hover:bg-[#004080] transition-colors w-auto self-start rounded-[40px]"
+        >
+          <p className="font-['Tesco_Modern'] font-bold text-[14px] sm:text-[16px] leading-[18px] sm:leading-[20px] text-white text-nowrap">
+            SHOP TESCO
+          </p>
+        </button>
+      )}
     </div>
   )
 }
