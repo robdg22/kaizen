@@ -343,7 +343,7 @@ export default function Search() {
   }
   
   // Mode switch handler
-  const switchMode = async (newMode: ShoppingMode, clearQuery = false) => {
+  const switchMode = async (newMode: ShoppingMode, clearQuery = false, resetContainers = true) => {
     setMode(newMode)
     // Clear products immediately to prevent showing wrong products
     setProducts([])
@@ -356,9 +356,11 @@ export default function Search() {
       setHasSearched(false)
     }
     
-    // Reset container visibility when switching modes
-    setHideFnFContainer(false)
-    setHideTescoContainer(false)
+    // Reset container visibility when switching modes (unless explicitly disabled)
+    if (resetContainers) {
+      setHideFnFContainer(false)
+      setHideTescoContainer(false)
+    }
     
     // Re-run search if we have a query and not clearing it, passing the new mode explicitly
     if (query && hasSearched && !clearQuery) {
@@ -1478,8 +1480,8 @@ export default function Search() {
                           products={clothingProducts}
                           totalCount={clothingProducts.length}
                           onSwitchToFnF={() => {
-                            setHideTescoContainer(true)
-                            switchMode('fnf')
+                            switchMode('fnf', false, false)
+                            setHideFnFContainer(true)
                           }}
                           onAddToWishlist={(product) => addToWishlist(product)}
                         />
@@ -2258,8 +2260,8 @@ export default function Search() {
                     products={groceryProducts}
                     totalCount={groceryProducts.length}
                     onSwitchToTesco={() => {
-                      setHideFnFContainer(true)
-                      switchMode('tesco')
+                      switchMode('tesco', false, false)
+                      setHideTescoContainer(true)
                     }}
                     onAddToBasket={(product) => {
                       const price = product.price?.actual || product.price?.price || 0
