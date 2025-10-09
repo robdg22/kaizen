@@ -47,6 +47,7 @@ function RollingCurrency({ value }: { value: number }) {
 
 export default function Search() {
   const [query, setQuery] = useState('')
+  const [lastSearchedQuery, setLastSearchedQuery] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [products, setProducts] = useState<ProductItem[]>([])
@@ -277,9 +278,14 @@ export default function Search() {
     setIsLoading(true)
     setError(null)
     setHasSearched(true)
+    setLastSearchedQuery(searchQuery) // Store the query that was actually searched
     setProducts([]) // Clear previous results to show skeleton immediately
     setGroceryProducts([])
     setClothingProducts([])
+    
+    // Reset container visibility for new searches
+    setHideFnFContainer(false)
+    setHideTescoContainer(false)
     
     // Always load 40 products regardless of viewport
     const productCount = 40
@@ -302,19 +308,19 @@ export default function Search() {
       const items = result.data.search?.productItems || result.data.search?.products || []
       
       // Both modes: separate into clothing and grocery
-      const clothing: ProductItem[] = []
-      const grocery: ProductItem[] = []
-      
-      items.forEach((item: ProductItem) => {
-        if (item.superDepartmentName === 'Clothing & Accessories') {
-          clothing.push(item)
-        } else {
-          grocery.push(item)
-        }
-      })
-      
-      setClothingProducts(clothing)
-      setGroceryProducts(grocery)
+        const clothing: ProductItem[] = []
+        const grocery: ProductItem[] = []
+        
+        items.forEach((item: ProductItem) => {
+          if (item.superDepartmentName === 'Clothing & Accessories') {
+            clothing.push(item)
+          } else {
+            grocery.push(item)
+          }
+        })
+        
+        setClothingProducts(clothing)
+        setGroceryProducts(grocery)
       
       if (currentMode === 'fnf') {
         // F&F mode: set products to clothing only for the grid display
@@ -1431,15 +1437,71 @@ export default function Search() {
                 </div>
               )}
 
-              {!isLoading && (groceryProducts.length === 0 && clothingProducts.length === 0) && query.trim() && (
-                <p className="text-gray-600 text-center py-8">No products found for "{query}"</p>
+              {!isLoading && (groceryProducts.length === 0 && clothingProducts.length === 0) && lastSearchedQuery.trim() && (
+                <p className="text-gray-600 text-center py-8">No products found for "{lastSearchedQuery}"</p>
               )}
 
               {!isLoading && (groceryProducts.length > 0 || clothingProducts.length > 0) && (
               <>
+                {/* Results count header - only show if current mode has results */}
+                {mode === 'tesco' && groceryProducts.length > 0 && (
+                  <div className="bg-white flex flex-col gap-[10px] items-start px-[16px] sm:px-[32px] py-[18px]">
+                    <p className="font-['Tesco_Modern'] font-bold text-[24px] leading-[28px] text-black">
+                      {groceryProducts.length} {groceryProducts.length === 1 ? 'result' : 'results'} for "{lastSearchedQuery}" in Tesco
+                    </p>
+                    {clothingProducts.length > 0 && (
+                      <div className="flex gap-[8px] items-start">
+                        <p className="font-['Tesco_Modern'] font-bold text-[14px] leading-[18px] text-[#333333]">
+                          Looking for other "{lastSearchedQuery}"?
+                        </p>
+                        <button
+                          onClick={() => {
+                            setHideTescoContainer(true)
+                            switchMode('fnf', false, false)
+                          }}
+                          className="font-['Tesco_Modern'] font-bold text-[16px] leading-[20px] text-[#00539f] underline hover:opacity-80 transition-opacity"
+                        >
+                          Show {clothingProducts.length} {clothingProducts.length === 1 ? 'result' : 'results'} in F&F Clothing
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {mode === 'fnf' && clothingProducts.length > 0 && (
+                  <div className="bg-white flex flex-col gap-[10px] items-start px-[16px] sm:px-[32px] py-[18px]">
+                    <p className="font-['F&F_Sans'] font-bold text-[24px] leading-[28px] text-black">
+                      {clothingProducts.length} {clothingProducts.length === 1 ? 'result' : 'results'} for "{lastSearchedQuery}" in F&F
+                    </p>
+                    {groceryProducts.length > 0 && (
+                      <div className="flex gap-[8px] items-start">
+                        <p className="font-['Tesco_Modern'] font-bold text-[14px] leading-[18px] text-[#333333]">
+                          Looking for other "{lastSearchedQuery}"?
+                        </p>
+                        <button
+                          onClick={() => {
+                            setHideFnFContainer(true)
+                            switchMode('tesco', false, false)
+                          }}
+                          className="font-['Tesco_Modern'] font-bold text-[16px] leading-[20px] text-[#333333] underline hover:opacity-80 transition-opacity"
+                        >
+                          Show {groceryProducts.length} {groceryProducts.length === 1 ? 'result' : 'results'} in Tesco
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {mode === 'tesco' ? (
                   // Tesco Mode: Show grocery grid with F&F container (8 tiles per row at desktop)
                   <div className="px-4 sm:px-8">
+                    {/* Show "0 results for query in Tesco" if no grocery products but has clothing */}
+                    {groceryProducts.length === 0 && clothingProducts.length > 0 && (
+                      <div className="pt-4 pb-4">
+                        <p className="font-['Tesco_Modern'] font-bold text-[18px] sm:text-[20px] leading-[24px] text-[#333]">
+                          0 results for "{lastSearchedQuery}" in Tesco
+                        </p>
+                      </div>
+                    )}
                     <div className="flex flex-wrap gap-0">
                     {groceryProducts.slice(0, 8).map((p) => (
                       <div key={p.id} className="w-1/2 sm:w-1/3 md:w-1/4 lg:w-1/6 xl:w-[12.5%] 2xl:w-[12.5%] flex">
@@ -1524,6 +1586,14 @@ export default function Search() {
                 ) : (
                   // F&F Mode: Show clothing products with Tesco container for grocery results
                   <>
+                  {/* Show "0 results for query in F&F clothing" if no clothing products but has grocery */}
+                  {clothingProducts.length === 0 && groceryProducts.length > 0 && (
+                    <div className="px-4 sm:px-8 pt-4 pb-4">
+                      <p className="font-['F&F_Sans'] font-bold text-[18px] sm:text-[20px] leading-[24px] text-[#333]">
+                        0 results for "{lastSearchedQuery}" in F&F clothing
+                      </p>
+                    </div>
+                  )}
                   <div className={`flex flex-wrap transition-all duration-500 ease-in-out ${
                     viewMode === 'zoomIn' ? 'gap-0' : 'gap-0'
                   }`}>
@@ -2288,12 +2358,12 @@ export default function Search() {
                       }, 3000)
                     }}
                   />
-                </div>
+              </div>
               )}
+              </>
+                )}
               </>
             )}
-              </>
-              )}
                   </div>
                 )
               })()}

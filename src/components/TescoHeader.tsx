@@ -1,6 +1,7 @@
 import TescoLogo from '../../assets/icons/Tesco Logos.svg'
 import BasketIcon from '../../assets/icons/Icon buttons/24px Icons/Basket.svg'
 import SearchIcon from '../../assets/icons/Property header/Icon buttons/24px Icons/Search.svg'
+import FnfLogo from '../../assets/icons/fnf.svg'
 
 interface TescoHeaderProps {
   basketTotal: number
@@ -65,6 +66,15 @@ export default function TescoHeader({
         <div className="bg-[#00539f] border-l border-[rgba(255,255,255,0.4)] h-[32px] flex items-center justify-center px-[12px] sm:px-[20px] py-[4px] flex-shrink-0">
           <p className="font-['Tesco_Modern'] font-bold text-[12px] sm:text-[14px] leading-[18px] text-white text-nowrap">Sign out</p>
         </div>
+        {/* Clickable F&F Logo - Switch to F&F Mode */}
+        <button 
+          onClick={onModeSwitch}
+          className="bg-black border-l border-[rgba(255,255,255,0.4)] h-[32px] flex items-center justify-center gap-[8px] px-[12px] sm:px-[20px] py-[4px] hover:bg-gray-800 transition-colors flex-shrink-0"
+          title="Go to F&F"
+        >
+          <img src={FnfLogo} alt="F&F" width="53" height="16" />
+          <p className="font-['F&F_Sans'] text-[12px] sm:text-[14px] leading-[18px] text-white text-nowrap">Clothing</p>
+        </button>
       </div>
 
       {/* Main Header */}
@@ -150,12 +160,6 @@ export default function TescoHeader({
         <div className="px-[6px] sm:px-[8px] py-[12px] flex-shrink-0">
           <p className="font-['Tesco_Modern'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-[#00539f] text-nowrap">Groceries & Essentials</p>
         </div>
-        <button 
-          onClick={onModeSwitch}
-          className="bg-black px-[6px] sm:px-[8px] py-[8px] hover:bg-gray-800 transition-colors flex-shrink-0"
-        >
-          <p className="font-['Tesco_Modern'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-white text-nowrap">F&F Clothing</p>
-        </button>
         <div className="px-[6px] sm:px-[8px] py-[12px] flex-shrink-0">
           <p className="font-['Tesco_Modern'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-[#00539f] text-nowrap">My Favourites</p>
         </div>
