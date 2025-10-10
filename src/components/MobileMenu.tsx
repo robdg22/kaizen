@@ -20,9 +20,9 @@ export default function MobileMenu({ isOpen, onClose, mode, onSwitchMode }: Mobi
       />
       
       {/* Menu Panel */}
-      <div className="fixed top-0 left-0 right-0 bottom-0 bg-white z-[301] overflow-y-auto">
+      <div className="fixed top-0 left-0 right-0 bottom-0 bg-white z-[301] overflow-y-auto flex flex-col">
         {mode === 'tesco' ? (
-          <div className="flex flex-col w-full">
+          <div className="flex flex-col w-full min-h-full">
             {/* Close Button */}
             <div className="bg-white border-b border-[#cccccc] flex items-center justify-end px-0 pr-[12px] py-[8px]">
               <button onClick={onClose} className="flex gap-[8px] items-center">
@@ -103,7 +103,7 @@ export default function MobileMenu({ isOpen, onClose, mode, onSwitchMode }: Mobi
             </div>
           </div>
         ) : (
-          <div className="flex flex-col w-full">
+          <div className="flex flex-col w-full min-h-full">
             {/* Close Button */}
             <div className="bg-white border-b border-[#cccccc] flex items-center justify-end px-0 pr-[12px] py-[8px]">
               <button onClick={onClose} className="flex gap-[8px] items-center">
