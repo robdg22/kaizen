@@ -10,6 +10,7 @@ import FnFContainer from './FnFContainer'
 import TescoContainer from './TescoContainer'
 import BasketSidebar from './BasketSidebar'
 import WishlistSidebar from './WishlistSidebar'
+import MobileMenu from './MobileMenu'
 
 // Rolling currency display for basket total (train timetable effect)
 function RollingCurrency({ value }: { value: number }) {
@@ -59,6 +60,7 @@ export default function Search() {
   const [groceryProducts, setGroceryProducts] = useState<ProductItem[]>([])
   const [clothingProducts, setClothingProducts] = useState<ProductItem[]>([])
   const [isHeaderVisible, setIsHeaderVisible] = useState(true)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   // Track mock sale prices for products
   const [productSalePrices, setProductSalePrices] = useState<Record<string, { wasPrice: number; discount: number }>>({})
   const [basketCount, setBasketCount] = useState(0)
@@ -1016,6 +1018,9 @@ export default function Search() {
           wishlistCount={wishlistCount}
           onBasketClick={toggleBasketSidebar}
           onWishlistClick={toggleWishlistSidebar}
+          isMobileMenuOpen={isMobileMenuOpen}
+          onMobileMenuOpen={() => setIsMobileMenuOpen(true)}
+          onMobileMenuClose={() => setIsMobileMenuOpen(false)}
         />
       ) : (
         <FnFHeader
@@ -1032,8 +1037,22 @@ export default function Search() {
           hasSearched={hasSearched}
           isVisible={isHeaderVisible}
           onBasketClick={toggleBasketSidebar}
+          isMobileMenuOpen={isMobileMenuOpen}
+          onMobileMenuOpen={() => setIsMobileMenuOpen(true)}
+          onMobileMenuClose={() => setIsMobileMenuOpen(false)}
         />
       )}
+
+      {/* Mobile Menu - Rendered at app level to overlay everything */}
+      <MobileMenu
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
+        mode={mode}
+        onSwitchMode={() => {
+          setIsMobileMenuOpen(false)
+          switchMode(mode === 'tesco' ? 'fnf' : 'tesco', false)
+        }}
+      />
 
       {/* Legacy Header kept for mobile view in F&F mode with existing features */}
       <div className={`fixed top-0 left-0 right-0 z-40 bg-white transition-transform duration-300 ease-out ${
