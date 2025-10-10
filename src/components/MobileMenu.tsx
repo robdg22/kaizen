@@ -28,11 +28,6 @@ export default function MobileMenu({
   
   if (!isOpen) return null
 
-  // Debug logging
-  console.log('MobileMenu - mode:', mode)
-  console.log('MobileMenu - tescoCategories:', tescoCategories)
-  console.log('MobileMenu - fnfCategories:', fnfCategories)
-
   const handleTescoCategoryClick = (category: TaxonomyItem) => {
     if (onTescoCategoryClick) {
       onTescoCategoryClick(category)
@@ -99,7 +94,7 @@ export default function MobileMenu({
                   className="bg-[#f5f5f5] border-b border-[#e5e5e5] px-[24px] py-[8px] flex items-start justify-start hover:bg-[#e8e8e8] transition-colors"
                 >
                   <p className="font-['F&F_Sans'] text-[14px] leading-[20px] text-[#00539f] py-[2px]">
-                    {category.label || category.name}
+                    {category.name}
                   </p>
                 </button>
               ))}
@@ -183,7 +178,7 @@ export default function MobileMenu({
                   className="bg-white border-b border-[#e5e5e5] px-[12px] py-[8px] flex items-start justify-between hover:bg-[#f5f5f5] transition-colors"
                 >
                   <p className="font-['F&F_Sans'] text-[16px] leading-[20px] text-black py-[2px] uppercase">
-                    {category.label || category.name}
+                    {category.name}
                   </p>
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                     <path d="M9 18l6-6-6-6" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>

@@ -45,7 +45,7 @@ export default function CategoryCarousel({ categories, onCategoryClick, roundedI
                 `}>
                   <img
                     src={imageUrl}
-                    alt={category.label}
+                    alt={category.name}
                     className="w-full h-full object-cover"
                   />
                 </div>
