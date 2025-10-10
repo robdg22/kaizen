@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import TescoLogo from '../../assets/icons/Tesco Logos.svg'
 import FnfLogo from '../../assets/icons/fnf.svg'
-import { TaxonomyItem } from '../lib/tesco'
+import type { TaxonomyItem } from '../lib/tesco'
 
 interface MobileMenuProps {
   isOpen: boolean
