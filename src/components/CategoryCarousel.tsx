@@ -20,7 +20,11 @@ export default function CategoryCarousel({ categories, onCategoryClick, roundedI
     <div className="relative bg-white py-6 sm:py-8">
       <div className="px-4 sm:px-8">
         {/* Grid container with 2 rows */}
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(70px,1fr))] sm:grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-3 sm:gap-6 grid-rows-2 max-w-full overflow-hidden">
+        <div className={`grid grid-rows-2 max-w-full overflow-hidden ${
+          roundedImages 
+            ? 'grid-cols-[repeat(auto-fit,minmax(70px,1fr))] sm:grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-3 sm:gap-6' 
+            : 'grid-cols-[repeat(auto-fit,minmax(120px,1fr))] sm:grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-2'
+        }`}>
           {categories.map((category) => {
             const imageUrl = getImageUrl(category)
             if (!imageUrl) return null
