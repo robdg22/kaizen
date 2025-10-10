@@ -1170,6 +1170,10 @@ export default function Search() {
           setIsMobileMenuOpen(false)
           switchMode(mode === 'tesco' ? 'fnf' : 'tesco', false)
         }}
+        tescoCategories={categories}
+        fnfCategories={fnfCategories}
+        onTescoCategoryClick={handleCategoryClick}
+        onFnFCategoryClick={handleFnFCategoryClick}
       />
 
       {/* Legacy Header kept for mobile view in F&F mode with existing features */}

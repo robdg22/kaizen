@@ -1,15 +1,46 @@
+import { useState } from 'react'
 import TescoLogo from '../../assets/icons/Tesco Logos.svg'
 import FnfLogo from '../../assets/icons/fnf.svg'
+import { TaxonomyItem } from '../lib/tesco'
 
 interface MobileMenuProps {
   isOpen: boolean
   onClose: () => void
   mode: 'tesco' | 'fnf'
   onSwitchMode: () => void
+  tescoCategories?: TaxonomyItem[]
+  fnfCategories?: TaxonomyItem[]
+  onTescoCategoryClick?: (category: TaxonomyItem) => void
+  onFnFCategoryClick?: (category: TaxonomyItem) => void
 }
 
-export default function MobileMenu({ isOpen, onClose, mode, onSwitchMode }: MobileMenuProps) {
+export default function MobileMenu({ 
+  isOpen, 
+  onClose, 
+  mode, 
+  onSwitchMode,
+  tescoCategories = [],
+  fnfCategories = [],
+  onTescoCategoryClick,
+  onFnFCategoryClick
+}: MobileMenuProps) {
+  const [showTescoDepartments, setShowTescoDepartments] = useState(false)
+  
   if (!isOpen) return null
+
+  const handleTescoCategoryClick = (category: TaxonomyItem) => {
+    if (onTescoCategoryClick) {
+      onTescoCategoryClick(category)
+      onClose()
+    }
+  }
+
+  const handleFnFCategoryClick = (category: TaxonomyItem) => {
+    if (onFnFCategoryClick) {
+      onFnFCategoryClick(category)
+      onClose()
+    }
+  }
 
   return (
     <>
@@ -38,15 +69,36 @@ export default function MobileMenu({ isOpen, onClose, mode, onSwitchMode }: Mobi
 
             {/* Local Navigation */}
             <div className="bg-white flex flex-col">
-              <div className="bg-white border-b border-[#e5e5e5] px-[12px] py-[8px] flex items-start justify-between">
+              {/* All Departments - Expandable */}
+              <button 
+                onClick={() => setShowTescoDepartments(!showTescoDepartments)}
+                className="bg-white border-b border-[#e5e5e5] px-[12px] py-[8px] flex items-start justify-between"
+              >
                 <p className="font-['F&F_Sans'] text-[16px] leading-[20px] text-[#00539f] py-[2px]">All Departments</p>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <svg 
+                  width="24" 
+                  height="24" 
+                  viewBox="0 0 24 24" 
+                  fill="none"
+                  className={`transition-transform ${showTescoDepartments ? 'rotate-90' : ''}`}
+                >
                   <path d="M9 18l6-6-6-6" stroke="#00539f" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-              </div>
-              <div className="bg-white border-b border-[#e5e5e5] px-[12px] py-[8px]">
-                <p className="font-['F&F_Sans'] text-[16px] leading-[20px] text-[#00539f] py-[2px]">Groceries & essentials</p>
-              </div>
+              </button>
+              
+              {/* Category List - Second Level */}
+              {showTescoDepartments && tescoCategories.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => handleTescoCategoryClick(category)}
+                  className="bg-[#f5f5f5] border-b border-[#e5e5e5] px-[24px] py-[8px] flex items-start justify-start hover:bg-[#e8e8e8] transition-colors"
+                >
+                  <p className="font-['F&F_Sans'] text-[14px] leading-[20px] text-[#00539f] py-[2px]">
+                    {category.label || category.name}
+                  </p>
+                </button>
+              ))}
+              
               <div className="bg-white border-b border-[#e5e5e5] px-[12px] py-[8px] flex items-start justify-between">
                 <p className="font-['F&F_Sans'] text-[16px] leading-[20px] text-[#00539f] py-[2px]">My Favourites</p>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -119,13 +171,19 @@ export default function MobileMenu({ isOpen, onClose, mode, onSwitchMode }: Mobi
 
             {/* F&F Navigation */}
             <div className="bg-white flex flex-col">
-              {['WOMEN', 'MEN', 'KIDS', 'BABY', 'SCHOOL', 'SPORTS', 'HOLIDAY SHOP', 'BRANDS', 'HOME'].map((item) => (
-                <div key={item} className="bg-white border-b border-[#e5e5e5] px-[12px] py-[8px] flex items-start justify-between">
-                  <p className="font-['F&F_Sans'] text-[16px] leading-[20px] text-black py-[2px]">{item}</p>
+              {fnfCategories.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => handleFnFCategoryClick(category)}
+                  className="bg-white border-b border-[#e5e5e5] px-[12px] py-[8px] flex items-start justify-between hover:bg-[#f5f5f5] transition-colors"
+                >
+                  <p className="font-['F&F_Sans'] text-[16px] leading-[20px] text-black py-[2px] uppercase">
+                    {category.label || category.name}
+                  </p>
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                     <path d="M9 18l6-6-6-6" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
-                </div>
+                </button>
               ))}
               <div className="bg-white border-b border-[#e5e5e5] px-[12px] py-[8px]">
                 <p className="font-['F&F_Sans'] text-[16px] leading-[20px] text-black py-[2px]">INSPIRE</p>
