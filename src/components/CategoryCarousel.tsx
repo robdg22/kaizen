@@ -35,7 +35,7 @@ export default function CategoryCarousel({ categories, onCategoryClick, roundedI
                 <div className={`
                   ${roundedImages 
                     ? 'w-[60px] h-[60px] sm:w-[140px] sm:h-[140px] rounded-full' 
-                    : 'w-[60px] h-[75px] sm:w-[140px] sm:h-[175px] rounded-none'
+                    : 'w-[120px] h-[150px] sm:w-[280px] sm:h-[350px] rounded-none'
                   } 
                   overflow-hidden bg-gray-100 transition-transform group-hover:scale-105
                 `}>
