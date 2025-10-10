@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
-import type { ProductItem, ProductVariation, ShoppingMode } from '../lib/tesco'
+import type { ProductItem, ProductVariation, ShoppingMode, TaxonomyItem } from '../lib/tesco'
 import { TescoAPI } from '../lib/tesco'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
@@ -11,6 +11,7 @@ import TescoContainer from './TescoContainer'
 import BasketSidebar from './BasketSidebar'
 import WishlistSidebar from './WishlistSidebar'
 import MobileMenu from './MobileMenu'
+import CategoryCarousel from './CategoryCarousel'
 
 // Rolling currency display for basket total (train timetable effect)
 function RollingCurrency({ value }: { value: number }) {
@@ -61,6 +62,11 @@ export default function Search() {
   const [clothingProducts, setClothingProducts] = useState<ProductItem[]>([])
   const [isHeaderVisible, setIsHeaderVisible] = useState(true)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  // Category browse state
+  const [categories, setCategories] = useState<TaxonomyItem[]>([])
+  const [fnfCategories, setFnfCategories] = useState<TaxonomyItem[]>([])
+  const [isBrowsingCategory, setIsBrowsingCategory] = useState(false)
+  const [currentCategoryName, setCurrentCategoryName] = useState('')
   // Track mock sale prices for products
   const [productSalePrices, setProductSalePrices] = useState<Record<string, { wasPrice: number; discount: number }>>({})
   const [basketCount, setBasketCount] = useState(0)
@@ -157,6 +163,35 @@ export default function Search() {
       // Automatically perform search with the determined mode
       performSearchWithQuery(urlQuery)
     }
+  }, [])
+
+  // Fetch taxonomy/categories on mount
+  useEffect(() => {
+    const fetchTaxonomy = async () => {
+      // Fetch Tesco categories with rounded style
+      const tescoResponse = await TescoAPI.getTaxonomy({ style: 'rounded' })
+      if (tescoResponse.data?.taxonomy) {
+        const categoriesWithImages = tescoResponse.data.taxonomy.filter(item => 
+          item.images && item.images.length > 0
+        )
+        setCategories(categoriesWithImages)
+      }
+      
+      // Fetch F&F categories without rounded style
+      const fnfResponse = await TescoAPI.getTaxonomy()
+      if (fnfResponse.data?.taxonomy) {
+        const clothingCategory = fnfResponse.data.taxonomy.find(item => 
+          item.name === 'Clothing & Accessories'
+        )
+        if (clothingCategory?.children) {
+          const clothingDepartments = clothingCategory.children.filter(child =>
+            child.images && child.images.length > 0
+          )
+          setFnfCategories(clothingDepartments)
+        }
+      }
+    }
+    fetchTaxonomy()
   }, [])
   
   // Sync mode to localStorage and URL when it changes
@@ -289,6 +324,10 @@ export default function Search() {
     setHideFnFContainer(false)
     setHideTescoContainer(false)
     
+    // Reset category browsing state when performing a search
+    setIsBrowsingCategory(false)
+    setCurrentCategoryName('')
+    
     // Always load 40 products regardless of viewport
     const productCount = 40
     
@@ -374,6 +413,79 @@ export default function Search() {
     if (query && hasSearched && !clearQuery) {
       await performSearchWithQuery(query, newMode)
     }
+  }
+
+  // Handle category click from carousel
+  const handleCategoryClick = async (category: TaxonomyItem) => {
+    // Special case: Clicking "Clothing & Accessories" switches to F&F mode
+    if (category.name === 'Clothing & Accessories') {
+      await switchMode('fnf', true)
+      return
+    }
+    
+    setIsLoading(true)
+    setIsBrowsingCategory(true)
+    setCurrentCategoryName(category.name)
+    setHasSearched(true)
+    setGroceryProducts([])
+    setClothingProducts([])
+    
+    // Fetch category products using the category name as superDepartment for Tesco mode
+    const result = await TescoAPI.getCategoryProducts({ 
+      superDepartment: category.name,
+      count: 48
+    })
+    
+    if (result.errors) {
+      setError(result.errors[0]?.message ?? 'Unknown error')
+      setGroceryProducts([])
+    } else if (result.data?.category) {
+      // Extract products from the simplified response
+      const items = result.data.category.products
+      setGroceryProducts(items)
+      setProducts(items)
+    }
+    
+    setIsLoading(false)
+  }
+
+  // Handle F&F category click (for departments like Women's, Men's, Kids, etc.)
+  const handleFnFCategoryClick = async (category: TaxonomyItem) => {
+    setIsLoading(true)
+    setIsBrowsingCategory(true)
+    setCurrentCategoryName(category.name)
+    setHasSearched(true)
+    setGroceryProducts([])
+    setClothingProducts([])
+    
+    // Fetch category products using the department name
+    const result = await TescoAPI.getCategoryProducts({ 
+      department: category.name,
+      count: 48
+    })
+    
+    if (result.errors) {
+      setError(result.errors[0]?.message ?? 'Unknown error')
+      setClothingProducts([])
+    } else if (result.data?.category) {
+      // Extract products from the simplified response
+      const items = result.data.category.products
+      setClothingProducts(items)
+      setProducts(items)
+    }
+    
+    setIsLoading(false)
+  }
+
+  // Reset to homepage - show category carousel
+  const resetToHomepage = () => {
+    setHasSearched(false)
+    setIsBrowsingCategory(false)
+    setQuery('')
+    setGroceryProducts([])
+    setClothingProducts([])
+    setProducts([])
+    setCurrentCategoryName('')
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -1021,6 +1133,9 @@ export default function Search() {
           isMobileMenuOpen={isMobileMenuOpen}
           onMobileMenuOpen={() => setIsMobileMenuOpen(true)}
           onMobileMenuClose={() => setIsMobileMenuOpen(false)}
+          onLogoClick={resetToHomepage}
+          categories={categories}
+          onCategoryClick={handleCategoryClick}
         />
       ) : (
         <FnFHeader
@@ -1040,6 +1155,9 @@ export default function Search() {
           isMobileMenuOpen={isMobileMenuOpen}
           onMobileMenuOpen={() => setIsMobileMenuOpen(true)}
           onMobileMenuClose={() => setIsMobileMenuOpen(false)}
+          onLogoClick={resetToHomepage}
+          categories={fnfCategories}
+          onCategoryClick={handleFnFCategoryClick}
         />
       )}
 
@@ -1429,8 +1547,25 @@ export default function Search() {
 
       {/* Content Container */}
       <div>
-        {/* Results Section - Only show after search */}
-        {hasSearched && (() => {
+        {/* Category Carousel - Only show on homepage in Tesco mode */}
+        {mode === 'tesco' && !hasSearched && !isBrowsingCategory && categories.length > 0 && (
+          <CategoryCarousel 
+            categories={categories} 
+            onCategoryClick={handleCategoryClick}
+          />
+        )}
+
+        {/* F&F Category Carousel - Only show on homepage in F&F mode */}
+        {mode === 'fnf' && !hasSearched && !isBrowsingCategory && fnfCategories.length > 0 && (
+          <CategoryCarousel 
+            categories={fnfCategories} 
+            onCategoryClick={handleFnFCategoryClick}
+            roundedImages={false}
+          />
+        )}
+
+        {/* Results Section - Only show after search or category browse */}
+        {(hasSearched || isBrowsingCategory) && (() => {
           
           return (
             <div>
@@ -1465,20 +1600,21 @@ export default function Search() {
                 {/* Results count header - only show if current mode has results */}
                 {mode === 'tesco' && groceryProducts.length > 0 && (
                   <div className="bg-white flex flex-col gap-[10px] items-start px-[16px] sm:px-[32px] py-[18px]">
-                    <p className="font-['Tesco_Modern'] font-bold text-[24px] leading-[28px] text-black">
-                      {groceryProducts.length} {groceryProducts.length === 1 ? 'result' : 'results'} for "{lastSearchedQuery}" in Tesco
+                    <p className="font-['Tesco_Modern'] font-bold text-[20px] sm:text-[24px] leading-[24px] sm:leading-[28px] text-black">
+                      {isBrowsingCategory 
+                        ? `${groceryProducts.length} ${groceryProducts.length === 1 ? 'product' : 'products'} in '${currentCategoryName}'`
+                        : `${groceryProducts.length} ${groceryProducts.length === 1 ? 'result' : 'results'} for "${lastSearchedQuery}" in Tesco`
+                      }
                     </p>
-                    {clothingProducts.length > 0 && (
-                      <div className="flex gap-[8px] items-start">
-                        <p className="font-['Tesco_Modern'] font-bold text-[14px] leading-[18px] text-[#333333]">
-                          Looking for other "{lastSearchedQuery}"?
-                        </p>
+                    {!isBrowsingCategory && clothingProducts.length > 0 && (
+                      <div className="flex flex-wrap gap-0 items-start font-['Tesco_Modern'] font-bold text-[14px] sm:text-[16px] leading-[18px] sm:leading-[20px] text-[#333333]">
+                        <p>Looking for other "{lastSearchedQuery}"?&nbsp;</p>
                         <button
                           onClick={async () => {
                             await switchMode('fnf', false, false)
                             setHideTescoContainer(true)
                           }}
-                          className="font-['Tesco_Modern'] font-bold text-[16px] leading-[20px] text-[#00539f] underline hover:opacity-80 transition-opacity"
+                          className="text-[#00539f] underline hover:opacity-80 transition-opacity"
                         >
                           Show {clothingProducts.length} {clothingProducts.length === 1 ? 'result' : 'results'} in F&F Clothing
                         </button>
@@ -1488,20 +1624,21 @@ export default function Search() {
                 )}
                 {mode === 'fnf' && clothingProducts.length > 0 && (
                   <div className="bg-white flex flex-col gap-[10px] items-start px-[16px] sm:px-[32px] py-[18px]">
-                    <p className="font-['F&F_Sans'] font-bold text-[24px] leading-[28px] text-black">
-                      {clothingProducts.length} {clothingProducts.length === 1 ? 'result' : 'results'} for "{lastSearchedQuery}" in F&F
+                    <p className="font-['F&F_Sans'] font-bold text-[20px] sm:text-[24px] leading-[24px] sm:leading-[28px] text-black">
+                      {isBrowsingCategory 
+                        ? `${clothingProducts.length} ${clothingProducts.length === 1 ? 'product' : 'products'} in '${currentCategoryName}'`
+                        : `${clothingProducts.length} ${clothingProducts.length === 1 ? 'result' : 'results'} for "${lastSearchedQuery}" in F&F`
+                      }
                     </p>
-                    {groceryProducts.length > 0 && (
-                      <div className="flex gap-[8px] items-start">
-                        <p className="font-['Tesco_Modern'] font-bold text-[14px] leading-[18px] text-[#333333]">
-                          Looking for other "{lastSearchedQuery}"?
-                        </p>
+                    {!isBrowsingCategory && groceryProducts.length > 0 && (
+                      <div className="flex flex-wrap gap-0 items-start font-['Tesco_Modern'] font-bold text-[14px] sm:text-[16px] leading-[18px] sm:leading-[20px] text-[#333333]">
+                        <p>Looking for other "{lastSearchedQuery}"?&nbsp;</p>
                         <button
                           onClick={async () => {
                             await switchMode('tesco', false, false)
                             setHideFnFContainer(true)
                           }}
-                          className="font-['Tesco_Modern'] font-bold text-[16px] leading-[20px] text-[#333333] underline hover:opacity-80 transition-opacity"
+                          className="text-[#00539f] underline hover:opacity-80 transition-opacity"
                         >
                           Show {groceryProducts.length} {groceryProducts.length === 1 ? 'result' : 'results'} in Tesco
                         </button>

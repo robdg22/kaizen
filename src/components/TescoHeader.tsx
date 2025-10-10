@@ -1,8 +1,10 @@
+import { useState, useRef, useEffect } from 'react'
 import TescoLogo from '../../assets/icons/Tesco Logos.svg'
 import BasketIcon from '../../assets/icons/Icon buttons/24px Icons/Basket.svg'
 import SearchIcon from '../../assets/icons/Property header/Icon buttons/24px Icons/Search.svg'
 import MenuIcon from '../../assets/icons/Property header/Icon buttons/20px Icons/Menu.svg'
 import FnfLogo from '../../assets/icons/fnf.svg'
+import type { TaxonomyItem } from '../lib/tesco'
 
 interface TescoHeaderProps {
   basketTotal: number
@@ -18,6 +20,9 @@ interface TescoHeaderProps {
   isMobileMenuOpen: boolean
   onMobileMenuOpen: () => void
   onMobileMenuClose: () => void
+  onLogoClick?: () => void
+  categories?: TaxonomyItem[]
+  onCategoryClick?: (category: TaxonomyItem) => void
 }
 
 export default function TescoHeader({ 
@@ -31,12 +36,82 @@ export default function TescoHeader({
   isVisible = true,
   onBasketClick,
   onWishlistClick,
-  onMobileMenuOpen
+  onMobileMenuOpen,
+  onLogoClick,
+  categories = [],
+  onCategoryClick
 }: TescoHeaderProps) {
+  const [visibleCategories, setVisibleCategories] = useState<TaxonomyItem[]>(categories)
+  const [overflowCategories, setOverflowCategories] = useState<TaxonomyItem[]>([])
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false)
+  const navRef = useRef<HTMLDivElement>(null)
+  const moreButtonRef = useRef<HTMLDivElement>(null)
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     onSearch(searchQuery)
   }
+
+  // Calculate which categories fit and which overflow
+  useEffect(() => {
+    if (!navRef.current || categories.length === 0) return
+
+    const calculateOverflow = () => {
+      const container = navRef.current
+      if (!container) return
+
+      const containerWidth = container.offsetWidth
+      const moreButtonWidth = 120 // Approximate width for "More" button
+      let totalWidth = 0
+      const tempVisible: TaxonomyItem[] = []
+      const tempOverflow: TaxonomyItem[] = []
+
+      // Measure each category's width (approximate based on text length)
+      categories.forEach((category) => {
+        const estimatedWidth = category.name.length * 8 + 32 // rough estimate
+        
+        if (totalWidth + estimatedWidth + moreButtonWidth < containerWidth || tempOverflow.length === 0) {
+          tempVisible.push(category)
+          totalWidth += estimatedWidth
+        } else {
+          tempOverflow.push(category)
+        }
+      })
+
+      // If we have overflow items, make sure we have room for the More button
+      if (tempOverflow.length > 0 && tempVisible.length > 0) {
+        // Move last visible item to overflow if needed
+        while (tempVisible.length > 1 && totalWidth + moreButtonWidth >= containerWidth) {
+          const moved = tempVisible.pop()
+          if (moved) {
+            tempOverflow.unshift(moved)
+            totalWidth -= (moved.name.length * 8 + 32)
+          }
+        }
+      }
+
+      setVisibleCategories(tempVisible)
+      setOverflowCategories(tempOverflow)
+    }
+
+    calculateOverflow()
+    window.addEventListener('resize', calculateOverflow)
+    return () => window.removeEventListener('resize', calculateOverflow)
+  }, [categories])
+
+  // Close more menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (moreButtonRef.current && !moreButtonRef.current.contains(e.target as Node)) {
+        setIsMoreMenuOpen(false)
+      }
+    }
+
+    if (isMoreMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isMoreMenuOpen])
 
   return (
     <div className={`flex flex-col items-start w-full bg-white sticky top-0 z-[200] transition-transform duration-300 ease-out ${
@@ -51,7 +126,9 @@ export default function TescoHeader({
             <button onClick={onMobileMenuOpen} className="flex flex-col items-center justify-center p-[6px] rounded-[18px] hover:bg-gray-100 transition-colors">
               <img src={MenuIcon} alt="Menu" width="20" height="20" />
             </button>
-            <img src={TescoLogo} alt="Tesco" height="19" width="68" />
+            <button onClick={onLogoClick} className="hover:opacity-80 transition-opacity">
+              <img src={TescoLogo} alt="Tesco" height="19" width="68" />
+            </button>
           </div>
           {/* Basket */}
           <div className="flex gap-[16px] items-center pt-[12px] pb-[8px]">
@@ -147,14 +224,14 @@ export default function TescoHeader({
         {/* Logo and Search */}
         <div className="flex flex-col sm:flex-row gap-[12px] sm:gap-[24px] items-stretch sm:items-center flex-1">
           {/* Tesco Logo */}
-          <div className="flex items-center justify-center sm:justify-start h-[40px] sm:h-auto sm:py-2 flex-shrink-0">
+          <button onClick={onLogoClick} className="flex items-center justify-center sm:justify-start h-[40px] sm:h-auto sm:py-2 flex-shrink-0 hover:opacity-80 transition-opacity">
             <img src={TescoLogo} 
             alt="Tesco" 
             width="120" 
             height="36" 
             className="h-[28px] sm:h-[36px] w-auto"
             />
-          </div>
+          </button>
 
           {/* Search Container */}
           <form onSubmit={handleSubmit} className="flex-1 py-[8px] sm:py-[16px]">
@@ -215,28 +292,53 @@ export default function TescoHeader({
       </div>
 
       {/* Desktop Local Navigation */}
-      <div className="bg-white hidden sm:flex gap-[16px] h-[44px] items-center w-full overflow-x-auto">
-        <div className="flex gap-[4px] sm:gap-[8px] items-center px-[6px] sm:px-[8px] py-[10px] flex-shrink-0">
-          <p className="font-['Tesco_Modern'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-[#00539f] text-nowrap">All Departments</p>
-          <svg width="20" height="20" className="sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none">
-            <path d="M6 9L12 15L18 9" stroke="#00539f" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </div>
-        <div className="px-[6px] sm:px-[8px] py-[12px] flex-shrink-0">
-          <p className="font-['Tesco_Modern'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-[#00539f] text-nowrap">Groceries & Essentials</p>
-        </div>
-        <div className="px-[6px] sm:px-[8px] py-[12px] flex-shrink-0">
-          <p className="font-['Tesco_Modern'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-[#00539f] text-nowrap">My Favourites</p>
-        </div>
-        <div className="px-[6px] sm:px-[8px] py-[12px] flex-shrink-0">
-          <p className="font-['Tesco_Modern'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-[#00539f] text-nowrap">Summer</p>
-        </div>
-        <div className="px-[6px] sm:px-[8px] py-[12px] flex-shrink-0">
-          <p className="font-['Tesco_Modern'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-[#00539f] text-nowrap">Tesco Clubcard</p>
-        </div>
-        <div className="px-[6px] sm:px-[8px] py-[12px] flex-shrink-0">
-          <p className="font-['Tesco_Modern'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-[#00539f] text-nowrap">Recipes</p>
-        </div>
+      <div ref={navRef} className="bg-white hidden sm:flex gap-[16px] h-[44px] items-center w-full overflow-hidden relative">
+        {visibleCategories.map((category) => (
+          <button
+            key={category.id}
+            onClick={() => onCategoryClick?.(category)}
+            className="px-[6px] sm:px-[8px] py-[12px] flex-shrink-0 hover:opacity-80 transition-opacity"
+          >
+            <p className="font-['Tesco_Modern'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-[#00539f] text-nowrap">
+              {category.name}
+            </p>
+          </button>
+        ))}
+        
+        {/* More menu button */}
+        {overflowCategories.length > 0 && (
+          <div className="relative flex-shrink-0" ref={moreButtonRef}>
+            <button
+              onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
+              className="flex gap-[4px] sm:gap-[8px] items-center px-[6px] sm:px-[8px] py-[10px] hover:opacity-80 transition-opacity"
+            >
+              <p className="font-['Tesco_Modern'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-[#00539f] text-nowrap">More</p>
+              <svg width="20" height="20" className="sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none">
+                <path d="M6 9L12 15L18 9" stroke="#00539f" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            
+            {/* Dropdown menu */}
+            {isMoreMenuOpen && (
+              <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 shadow-lg rounded-md py-2 z-50 min-w-[200px]">
+                {overflowCategories.map((category) => (
+                  <button
+                    key={category.id}
+                    onClick={() => {
+                      onCategoryClick?.(category)
+                      setIsMoreMenuOpen(false)
+                    }}
+                    className="w-full px-4 py-2 text-left hover:bg-gray-100 transition-colors"
+                  >
+                    <p className="font-['Tesco_Modern'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-[#00539f]">
+                      {category.name}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Divider */}

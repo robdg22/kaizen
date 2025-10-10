@@ -103,8 +103,8 @@ export interface GetTaxonomyResponse {
 
 export interface GetCategoryProductsResponse {
   category: {
-    pageInformation: PageInformation
-    productItems: ProductItem[]
+    info: PageInformation
+    products: ProductItem[]
   }
 }
 
@@ -396,8 +396,8 @@ query GetTaxonomy($storeId: ID, $includeInspirationEvents: Boolean, $style: Stri
 }`
 
 export const CATEGORY_PRODUCTS_QUERY = `#graphql
-query GetCategoryProducts($categoryId: ID, $page: Int, $count: Int, $sortBy: String, $offers: Boolean) {
-  category(page: $page, count: $count, sortBy: $sortBy, categoryId: $categoryId, offers: $offers) {
+query GetCategoryProducts($superDepartment: String, $department: String, $page: Int, $count: Int, $sortBy: String) {
+  category(superDepartment: $superDepartment, department: $department, page: $page, count: $count, sortBy: $sortBy) {
     info { total page count pageSize offset }
     products {
       id
@@ -413,6 +413,10 @@ query GetCategoryProducts($categoryId: ID, $page: Int, $count: Int, $sortBy: Str
       images { display { default { url originalUrl } } default { url originalUrl } }
       price { actual unitPrice unitOfMeasure }
       promotions { id promotionType startDate endDate description }
+      superDepartmentId
+      superDepartmentName
+      departmentId
+      departmentName
     }
   }
 }
@@ -486,13 +490,19 @@ export class TescoAPI {
     return graphqlRequest<GetTaxonomyResponse>(TAXONOMY_QUERY, variables, this.proxyUrl)
   }
 
-  static async getCategoryProducts(options: { categoryId: string; page?: number; count?: number; sortBy?: string; offers?: boolean }) {
+  static async getCategoryProducts(options: { 
+    superDepartment?: string;
+    department?: string; 
+    page?: number; 
+    count?: number; 
+    sortBy?: string;
+  }) {
     const variables = {
-      categoryId: options.categoryId,
+      superDepartment: options.superDepartment,
+      department: options.department,
       page: options.page ?? 0,
-      count: options.count ?? 20,
-      sortBy: options.sortBy,
-      offers: options.offers ?? false,
+      count: options.count ?? 48,
+      sortBy: options.sortBy ?? "relevance",
     }
     return graphqlRequest<GetCategoryProductsResponse>(CATEGORY_PRODUCTS_QUERY, variables, this.proxyUrl)
   }

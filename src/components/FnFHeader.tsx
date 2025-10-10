@@ -3,6 +3,7 @@ import TescoLogo from '../../assets/icons/Tesco Logos.svg'
 import BasketIcon from '../../assets/icons/Icon buttons/24px Icons/Basket.svg'
 import MenuIcon from '../../assets/icons/Property header/Icon buttons/20px Icons/Menu.svg'
 import FnfLogo from '../../assets/icons/fnf.svg'
+import type { TaxonomyItem } from '../lib/tesco'
 
 type ViewMode = 'zoomIn' | 'default' | 'zoomOut'
 
@@ -23,6 +24,9 @@ interface FnFHeaderProps {
   isMobileMenuOpen: boolean
   onMobileMenuOpen: () => void
   onMobileMenuClose: () => void
+  onLogoClick?: () => void
+  categories?: TaxonomyItem[]
+  onCategoryClick?: (category: TaxonomyItem) => void
 }
 
 export default function FnFHeader({ 
@@ -39,7 +43,10 @@ export default function FnFHeader({
   hasSearched,
   isVisible = true,
   onBasketClick,
-  onMobileMenuOpen
+  onMobileMenuOpen,
+  onLogoClick,
+  categories = [],
+  onCategoryClick
 }: FnFHeaderProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -59,7 +66,9 @@ export default function FnFHeader({
             <button onClick={onMobileMenuOpen} className="flex flex-col items-center justify-center p-[6px] rounded-[18px] hover:bg-gray-100 transition-colors">
               <img src={MenuIcon} alt="Menu" width="20" height="20" style={{ filter: 'brightness(0)' }} />
             </button>
-            <img src={FnfLogo} alt="F&F" height="19" width="58" />
+            <button onClick={onLogoClick} className="hover:opacity-80 transition-opacity">
+              <img src={FnfLogo} alt="F&F" height="19" width="58" />
+            </button>
           </div>
           {/* Basket */}
           <div className="flex gap-[16px] items-center pt-[12px] pb-[8px]">
@@ -143,14 +152,14 @@ export default function FnFHeader({
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center flex-1">
           <div className="flex flex-col sm:flex-row gap-[12px] sm:gap-[24px] items-stretch sm:items-center flex-1">
             {/* F&F Logo */}
-            <div className="flex items-center justify-center sm:justify-start h-[40px] sm:h-auto sm:py-2 flex-shrink-0">
+            <button onClick={onLogoClick} className="flex items-center justify-center sm:justify-start h-[40px] sm:h-auto sm:py-2 flex-shrink-0 hover:opacity-80 transition-opacity">
               <img src={FnfLogo} 
               alt="F&F" 
               width="120" 
               height="36" 
               className="h-[28px] sm:h-[36px] w-auto"
               />
-            </div>
+            </button>
 
             {/* Search Container */}
             <form onSubmit={handleSubmit} className="flex-1 py-[8px] sm:py-[16px]">
@@ -214,42 +223,17 @@ export default function FnFHeader({
 
       {/* Desktop Local Navigation */}
       <div className="bg-white hidden sm:flex gap-[16px] h-[44px] items-center w-full overflow-x-auto">
-        <div className="px-[6px] sm:px-[8px] py-[12px] flex-shrink-0">
-          <p className="font-['F&F_Sans'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-black text-nowrap">WOMEN</p>
-        </div>
-        <div className="px-[6px] sm:px-[8px] py-[12px] flex-shrink-0">
-          <p className="font-['F&F_Sans'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-black text-nowrap">MEN</p>
-        </div>
-        <div className="px-[6px] sm:px-[8px] py-[12px] flex-shrink-0">
-          <p className="font-['F&F_Sans'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-black text-nowrap">KIDS</p>
-        </div>
-        <div className="px-[6px] sm:px-[8px] py-[12px] flex-shrink-0">
-          <p className="font-['F&F_Sans'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-black text-nowrap">BABY</p>
-        </div>
-        <div className="px-[6px] sm:px-[8px] py-[12px] flex-shrink-0">
-          <p className="font-['F&F_Sans'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-black text-nowrap">SCHOOL</p>
-        </div>
-        <div className="px-[6px] sm:px-[8px] py-[12px] flex-shrink-0">
-          <p className="font-['F&F_Sans'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-black text-nowrap">SPORTS</p>
-        </div>
-        <div className="px-[6px] sm:px-[8px] py-[12px] flex-shrink-0">
-          <p className="font-['F&F_Sans'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-black text-nowrap">HOLIDAY SHOP</p>
-        </div>
-        <div className="px-[6px] sm:px-[8px] py-[12px] flex-shrink-0">
-          <p className="font-['F&F_Sans'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-black text-nowrap">BRANDS</p>
-        </div>
-        <div className="px-[6px] sm:px-[8px] py-[12px] flex-shrink-0">
-          <p className="font-['F&F_Sans'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-black text-nowrap">HOME</p>
-        </div>
-        <div className="px-[6px] sm:px-[8px] py-[12px] flex-shrink-0">
-          <p className="font-['F&F_Sans'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-black text-nowrap">INSPIRE</p>
-        </div>
-        <div className="px-[6px] sm:px-[8px] py-[12px] flex-shrink-0">
-          <p className="font-['F&F_Sans'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-black text-nowrap">GIFTS</p>
-        </div>
-        <div className="px-[6px] sm:px-[8px] py-[12px] flex-shrink-0">
-          <p className="font-['F&F_Sans'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-[#e81c2d] text-nowrap">SALE</p>
-        </div>
+        {categories.map((category) => (
+          <button
+            key={category.id}
+            onClick={() => onCategoryClick?.(category)}
+            className="px-[6px] sm:px-[8px] py-[12px] flex-shrink-0 hover:opacity-80 transition-opacity"
+          >
+            <p className="font-['F&F_Sans'] font-bold text-[14px] sm:text-[16px] leading-[20px] text-black text-nowrap uppercase">
+              {category.name}
+            </p>
+          </button>
+        ))}
       </div>
 
       {/* Divider */}
