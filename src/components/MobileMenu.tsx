@@ -28,6 +28,11 @@ export default function MobileMenu({
   
   if (!isOpen) return null
 
+  // Debug logging
+  console.log('MobileMenu - mode:', mode)
+  console.log('MobileMenu - tescoCategories:', tescoCategories)
+  console.log('MobileMenu - fnfCategories:', fnfCategories)
+
   const handleTescoCategoryClick = (category: TaxonomyItem) => {
     if (onTescoCategoryClick) {
       onTescoCategoryClick(category)
