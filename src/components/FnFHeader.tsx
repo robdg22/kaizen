@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import SearchIcon from '../../assets/icons/Property header/Icon buttons/24px Icons/Search.svg'
 import TescoLogo from '../../assets/icons/Tesco Logos.svg'
 import BasketIcon from '../../assets/icons/Icon buttons/24px Icons/Basket.svg'
 import MenuIcon from '../../assets/icons/Property header/Icon buttons/20px Icons/Menu.svg'
 import FnfLogo from '../../assets/icons/fnf.svg'
+import MobileMenu from './MobileMenu'
 
 type ViewMode = 'zoomIn' | 'default' | 'zoomOut'
 
@@ -37,9 +39,16 @@ export default function FnFHeader({
   isVisible = true,
   onBasketClick
 }: FnFHeaderProps) {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     onSearch(searchQuery)
+  }
+
+  const handleMobileModeSwitch = () => {
+    setIsMobileMenuOpen(false)
+    onModeSwitch()
   }
 
   return (
@@ -52,9 +61,9 @@ export default function FnFHeader({
         <div className="flex items-start justify-between px-[12px] py-0 h-[60px] w-full">
           {/* Logo */}
           <div className="flex gap-[8px] h-[54px] items-center pt-[4px]">
-            <div className="flex flex-col items-center justify-center p-[6px] rounded-[18px]">
+            <button onClick={() => setIsMobileMenuOpen(true)} className="flex flex-col items-center justify-center p-[6px] rounded-[18px] hover:bg-gray-100 transition-colors">
               <img src={MenuIcon} alt="Menu" width="20" height="20" style={{ filter: 'brightness(0)' }} />
-            </div>
+            </button>
             <img src={FnfLogo} alt="F&F" height="19" width="58" />
           </div>
           {/* Basket */}
@@ -314,6 +323,14 @@ export default function FnFHeader({
           </div>
         </div>
       )}
+
+      {/* Mobile Menu */}
+      <MobileMenu 
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
+        mode="fnf"
+        onSwitchMode={handleMobileModeSwitch}
+      />
     </div>
   )
 }

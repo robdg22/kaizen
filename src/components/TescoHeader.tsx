@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import TescoLogo from '../../assets/icons/Tesco Logos.svg'
 import BasketIcon from '../../assets/icons/Icon buttons/24px Icons/Basket.svg'
 import SearchIcon from '../../assets/icons/Property header/Icon buttons/24px Icons/Search.svg'
 import MenuIcon from '../../assets/icons/Property header/Icon buttons/20px Icons/Menu.svg'
 import FnfLogo from '../../assets/icons/fnf.svg'
+import MobileMenu from './MobileMenu'
 
 interface TescoHeaderProps {
   basketTotal: number
@@ -29,9 +31,16 @@ export default function TescoHeader({
   onBasketClick,
   onWishlistClick
 }: TescoHeaderProps) {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     onSearch(searchQuery)
+  }
+
+  const handleMobileModeSwitch = () => {
+    setIsMobileMenuOpen(false)
+    onModeSwitch()
   }
 
   return (
@@ -44,9 +53,9 @@ export default function TescoHeader({
         <div className="flex items-start justify-between px-[12px] py-0 h-[60px] w-full">
           {/* Logo */}
           <div className="flex gap-[8px] h-[54px] items-center pt-[4px]">
-            <div className="flex flex-col items-center justify-center p-[6px] rounded-[18px]">
+            <button onClick={() => setIsMobileMenuOpen(true)} className="flex flex-col items-center justify-center p-[6px] rounded-[18px] hover:bg-gray-100 transition-colors">
               <img src={MenuIcon} alt="Menu" width="20" height="20" />
-            </div>
+            </button>
             <img src={TescoLogo} alt="Tesco" height="19" width="68" />
           </div>
           {/* Basket */}
@@ -237,6 +246,14 @@ export default function TescoHeader({
 
       {/* Divider */}
       <div className="bg-[#cccccc] h-px w-full" />
+
+      {/* Mobile Menu */}
+      <MobileMenu 
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
+        mode="tesco"
+        onSwitchMode={handleMobileModeSwitch}
+      />
     </div>
   )
 }
