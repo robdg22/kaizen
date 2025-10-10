@@ -1455,9 +1455,9 @@ export default function Search() {
                           Looking for other "{lastSearchedQuery}"?
                         </p>
                         <button
-                          onClick={() => {
+                          onClick={async () => {
+                            await switchMode('fnf', false, false)
                             setHideTescoContainer(true)
-                            switchMode('fnf', false, false)
                           }}
                           className="font-['Tesco_Modern'] font-bold text-[16px] leading-[20px] text-[#00539f] underline hover:opacity-80 transition-opacity"
                         >
@@ -1478,9 +1478,9 @@ export default function Search() {
                           Looking for other "{lastSearchedQuery}"?
                         </p>
                         <button
-                          onClick={() => {
+                          onClick={async () => {
+                            await switchMode('tesco', false, false)
                             setHideFnFContainer(true)
-                            switchMode('tesco', false, false)
                           }}
                           className="font-['Tesco_Modern'] font-bold text-[16px] leading-[20px] text-[#333333] underline hover:opacity-80 transition-opacity"
                         >
@@ -1541,9 +1541,9 @@ export default function Search() {
                         <FnFContainer
                           products={clothingProducts}
                           totalCount={clothingProducts.length}
-                          onSwitchToFnF={() => {
-                            switchMode('fnf', false, false)
-                            setHideFnFContainer(true)
+                          onSwitchToFnF={async () => {
+                            await switchMode('fnf', false, false)
+                            setHideTescoContainer(true)
                           }}
                           onAddToWishlist={(product) => addToWishlist(product)}
                         />
@@ -2329,9 +2329,9 @@ export default function Search() {
                   <TescoContainer
                     products={groceryProducts}
                     totalCount={groceryProducts.length}
-                    onSwitchToTesco={() => {
-                      switchMode('tesco', false, false)
-                      setHideTescoContainer(true)
+                    onSwitchToTesco={async () => {
+                      await switchMode('tesco', false, false)
+                      setHideFnFContainer(true)
                     }}
                     onAddToBasket={(product) => {
                       const price = product.price?.actual || product.price?.price || 0
