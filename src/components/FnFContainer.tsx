@@ -36,7 +36,9 @@ export default function FnFContainer({ products, totalCount, onSwitchToFnF, onAd
           return (
             <button 
               key={product.id} 
-              onClick={onSwitchToFnF}
+              onClick={() => {
+                window.location.href = `/product/${product.tpnc}`
+              }}
               className="bg-white relative cursor-pointer hover:shadow-lg transition-all group"
             >
               {/* Product Image with 4:5 aspect ratio */}

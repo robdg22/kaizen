@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom'
 import type { ProductItem } from '../lib/tesco'
 
 interface TescoProductCardProps {
@@ -6,8 +7,14 @@ interface TescoProductCardProps {
 }
 
 export default function TescoProductCard({ product, onAddToBasket }: TescoProductCardProps) {
+  const navigate = useNavigate()
+  
   // Get product image
   const imageUrl = product.media?.defaultImage?.url || product.defaultImageUrl || product.images?.display?.default?.url || ''
+
+  const handleProductClick = () => {
+    navigate(`/product/${product.tpnc}`)
+  }
 
   // Get product price
   const price = product.price?.actual || product.price?.price || 0
@@ -27,8 +34,11 @@ export default function TescoProductCard({ product, onAddToBasket }: TescoProduc
 
   return (
     <div className="bg-white border border-[#cccccc] flex flex-col gap-[8px] sm:gap-[12px] p-[8px] sm:p-[16px] w-full h-full">
-      {/* Top container */}
-      <div className="flex flex-col gap-[8px] sm:gap-[12px] w-full flex-1">
+      {/* Top container - Clickable */}
+      <div 
+        className="flex flex-col gap-[8px] sm:gap-[12px] w-full flex-1 cursor-pointer hover:opacity-80 transition-opacity"
+        onClick={handleProductClick}
+      >
         {/* Image container - Square aspect ratio */}
         <div className="flex items-center justify-center w-full">
           <div className="flex flex-col items-start w-full aspect-square">
@@ -95,7 +105,10 @@ export default function TescoProductCard({ product, onAddToBasket }: TescoProduc
           {/* Add button */}
           <div className="flex-1 flex flex-wrap gap-[8px] sm:gap-[12px] items-start">
             <button
-              onClick={onAddToBasket}
+              onClick={(e) => {
+                e.stopPropagation()
+                onAddToBasket()
+              }}
               className="bg-[#00539f] rounded-[32px] sm:rounded-[40px] px-[12px] sm:px-[20px] py-[6px] sm:py-[8px] flex items-center justify-center hover:bg-[#004080] transition-colors w-full sm:w-auto"
             >
               <p className="font-['Tesco_Modern'] font-bold text-[14px] sm:text-[16px] leading-[18px] sm:leading-[20px] text-white text-nowrap">

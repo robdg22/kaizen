@@ -58,6 +58,7 @@ export interface VariationAttributeType {
 export interface ProductItem {
   id: string
   baseProductId: string
+  tpnc: string
   title: string
   brandName: string
   shortDescription: string
@@ -132,12 +133,98 @@ export interface GetProductResponse {
   product: {
     id: string
     baseProductId: string
+    tpnc: string
     title: string
+    description?: string
+    brandName?: string
+    defaultImageUrl?: string
+    superDepartmentName?: string
+    departmentName?: string
+    aisleName?: string
+    shelfName?: string
+    price?: {
+      actual: number
+      unitPrice: string
+      unitOfMeasure: string
+    }
+    promotions?: Array<{
+      id: string
+      promotionType: string
+      description: string
+      price?: {
+        beforeDiscount: number
+        afterDiscount: number
+      }
+    }>
     media?: {
+      defaultImage?: { url: string; aspectRatio?: number | string }
       images?: Array<{ url: string; aspectRatio?: number | string }>
+      videos?: Array<{ url: string; mimeType: string; aspectRatio?: number | string }>
+    }
+    images?: {
+      display?: {
+        default?: { url: string; originalUrl: string }
+        zoom?: { url: string }
+      }
+    }
+    reviews?: {
+      stats?: {
+        noOfReviews: number
+        overallRating: number
+      }
+      entries?: Array<{
+        rating: { value: number; range: number }
+        author: { nickname: string; authoredByMe: boolean }
+        summary: string
+        text: string
+        submissionDateTime: string
+        verifiedBuyer: boolean
+      }>
+    }
+    details?: {
+      ingredients?: string
+      storage?: string
+      nutritionInfo?: Array<{
+        name: string
+        perComp: string
+        perServing: string
+        referenceIntake: string
+        referencePercentage: string
+      }>
+      allergenInfo?: Array<{
+        name: string
+        values: string[]
+      }>
+      specifications?: {
+        specificationAttributes?: Array<{
+          attributeName: string
+          attributeValue: string
+        }>
+      }
+      clothingInfo?: {
+        fibreComposition?: string[]
+        specialFeature?: string[]
+        careInstructions?: string[]
+        sizeChart?: {
+          url: string
+          id: string | null
+        }
+      }
     }
     variations?: {
       products: ProductVariation[]
+    }
+    sellers?: {
+      results: Array<{
+        id: string
+        isForSale: boolean
+        status: string
+        price?: {
+          actual: number
+          unitPrice: string
+          unitOfMeasure: string
+        }
+      }>
     }
   }
 }
@@ -244,6 +331,7 @@ fragment PageInformation on ListInfoInterface {
 fragment ProductItem on ProductInterface {
   id
   baseProductId
+  tpnc
   title
   brandName
   shortDescription
@@ -423,42 +511,735 @@ query GetCategoryProducts($superDepartment: String, $department: String, $page: 
 `
 
 export const GET_PRODUCT_QUERY = `#graphql
-query GetProduct($tpnc: String!) {
-  product(tpnc: $tpnc) {
+query GetProduct($tpnc: String, $skipReviews: Boolean!, $offset: Int, $count: Int, $includeVariations: Boolean = false, $includeFulfilment: Boolean = false, $sellersType: SellersAttribute, $sellerTypeForVariations: SellersAttribute, $markRecentlyViewed: Boolean = false) {
+  product(tpnc: $tpnc, markRecentlyViewed: $markRecentlyViewed) {
     id
     baseProductId
+    isRestrictedOrderAmendment
+    gtin
+    tpnb
+    tpnc
     title
+    description
+    brandName
+    isInFavourites
+    defaultImageUrl
+    superDepartmentName
+    superDepartmentId
+    departmentName
+    departmentId
+    aisleName
+    aisleId
+    seller {
+      id
+      __typename
+    }
+    shelfName
+    displayType
+    shelfId
+    averageWeight
+    bulkBuyLimit
+    bulkBuyLimitGroupId
+    bulkBuyLimitMessage
+    groupBulkBuyLimit
+    isNew
+    depositAmount
     media {
-      images {
+      videos {
         url
+        mimeType
+        __typename
         aspectRatio
       }
+      defaultImage {
+        url
+        aspectRatio
+        __typename
+      }
+      __typename
     }
-    variations {
-      products {
-        id
-        tpnc
+    icons {
+      id
+      caption
+      __typename
+    }
+    status
+    isForSale
+    price {
+      actual
+      unitPrice
+      unitOfMeasure
+      __typename
+    }
+    promotions {
+      id
+      promotionType
+      startDate
+      endDate
+      description
+      unitSellingInfo
+      price {
+        beforeDiscount
+        afterDiscount
+        __typename
+      }
+      attributes
+      qualities
+      info {
         title
-        variationAttributes {
-          attributeGroup
-          attributeGroupData {
-            name
-            value
-            attributes {
-              name
-              value
+        __typename
+      }
+      metaData {
+        seo {
+          afterDiscountPrice
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    productType
+    charges {
+      ... on ProductDepositReturnCharge {
+        __typename
+        amount
+      }
+      __typename
+    }
+    __typename
+    ... on FNFProduct {
+      variations {
+        ...VariationProducts @include(if: $includeVariations)
+        __typename
+      }
+      media {
+        defaultImage {
+          url
+          aspectRatio
+          __typename
+        }
+        images {
+          url
+          aspectRatio
+          ... on ModelImage {
+            modelHeight
+            modelWearingSize
+            __typename
+          }
+          __typename
+        }
+        __typename
+      }
+      sellers(type: $sellersType) {
+        results {
+          isForSale
+          status
+          fulfilment @include(if: $includeFulfilment) {
+            ...Fulfilment
+            ... on ProductReturnType {
+              __typename
+              daysToReturn
             }
+            __typename
           }
-        }
-        sellers {
-          results {
-            isForSale
-            status
+          returnDetails {
+            displayName
+            returnMethod
+            daysToReturn
+            charges {
+              value
+              currency
+              __typename
+            }
+            __typename
           }
+          __typename
         }
+        __typename
+      }
+      __typename
+    }
+    __typename
+    ... on MPProduct {
+      variations {
+        ...VariationProducts @include(if: $includeVariations)
+        __typename
+      }
+      __typename
+    }
+    sellers(type: $sellersType) {
+      ...Sellers
+      __typename
+    }
+    images {
+      display {
+        default {
+          url
+          originalUrl
+          __typename
+        }
+        zoom {
+          url
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    foodIcons
+    shelfLife {
+      url
+      message
+      __typename
+    }
+    restrictions {
+      type
+      isViolated
+      message
+      __typename
+    }
+    distributorAddress {
+      ...Address
+      __typename
+    }
+    manufacturer {
+      addresses
+      __typename
+    }
+    importerAddress {
+      ...Address
+      __typename
+    }
+    returnTo {
+      ...Address
+      __typename
+    }
+    maxWeight
+    minWeight
+    catchWeightList {
+      price
+      weight
+      default
+      __typename
+    }
+    multiPackDetails {
+      ...Multipack
+      __typename
+    }
+    details {
+      energyEfficiency {
+        class
+        energyClassUrl
+        productInfoDoc
+        __typename
+      }
+      clothingInfo {
+        fibreComposition
+        specialFeature
+        careInstructions
+        sizeChart {
+          url
+          id
+          __typename
+        }
+        __typename
+      }
+      ...Details
+      components {
+        ... on CompetitorsInfo {
+          competitors {
+            id
+            priceMatch {
+              isMatching
+              __typename
+            }
+            __typename
+          }
+          __typename
+        }
+        ... on AdditionalInfo {
+          isLowEverydayPricing
+          isLowPricePromise
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    reviews(offset: $offset, count: $count) @skip(if: $skipReviews) {
+      info {
+        offset
+        total
+        page
+        count
+        __typename
+      }
+      entries {
+        rating {
+          value
+          range
+          __typename
+        }
+        author {
+          nickname
+          authoredByMe
+          __typename
+        }
+        status
+        summary
+        text
+        syndicated
+        syndicationSource {
+          name
+          clientUrl
+          __typename
+        }
+        submissionDateTime
+        reviewId
+        verifiedBuyer
+        promotionalReview
+        __typename
+      }
+      stats {
+        noOfReviews
+        overallRating
+        __typename
+      }
+      __typename
+    }
+  }
+}
+
+fragment GDA on GuidelineDailyAmountType {
+  title
+  dailyAmounts {
+    name
+    value
+    percent
+    rating
+    __typename
+  }
+  __typename
+}
+
+fragment Alcohol on AlcoholInfoItemType {
+  tastingNotes
+  grapeVariety
+  vinificationDetails
+  history
+  regionalInformation
+  storageType
+  storageInstructions
+  alcoholUnitsOtherText
+  regionOfOrigin
+  alcoholType
+  wineColour
+  alcoholUnits
+  percentageAlcohol
+  currentVintage
+  producer
+  typeOfClosure
+  wineMaker
+  packQty
+  packMeasure
+  country
+  tasteCategory
+  alcoholByVolumeOtherText
+  wineEffervescence
+  legalNotice {
+    message
+    link
+    __typename
+  }
+  __typename
+}
+
+fragment Nutrition on NutritionalInfoItemType {
+  name
+  perComp: value1
+  perServing: value2
+  referenceIntake: value3
+  referencePercentage: value4
+  __typename
+}
+
+fragment CookingInstructions on CookingInstructionsType {
+  oven {
+    chilled {
+      time
+      instructions
+      temperature {
+        value
+        __typename
+      }
+      __typename
+    }
+    frozen {
+      time
+      instructions
+      temperature {
+        value
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+  microwave {
+    chilled {
+      detail {
+        step
+        T650
+        T750
+        T850
+        __typename
+      }
+      instructions
+      __typename
+    }
+    frozen {
+      detail {
+        step
+        T650
+        T750
+        T850
+        __typename
+      }
+      instructions
+      __typename
+    }
+    __typename
+  }
+  cookingMethods {
+    name
+    instructions
+    time
+    __typename
+  }
+  otherInstructions
+  cookingGuidelines
+  cookingPrecautions
+  __typename
+}
+
+fragment Address on AddressType {
+  addressLine1
+  addressLine2
+  addressLine3
+  addressLine4
+  addressLine5
+  addressLine6
+  addressLine7
+  addressLine8
+  addressLine9
+  addressLine10
+  addressLine11
+  addressLine12
+  addressLine13
+  addressLine14
+  addressLine15
+  addressLine16
+  addressLine18
+  addressLine19
+  addressLine20
+  __typename
+}
+
+fragment Multipack on MultipackDetailType {
+  name
+  description
+  sequence
+  numberOfUses
+  features
+  boxContents
+  storage
+  nutritionIconInfo
+  nutritionalClaims
+  healthClaims
+  preparationAndUsage
+  otherInformation
+  ingredients
+  cookingInstructions {
+    ...CookingInstructions
+    __typename
+  }
+  originInformation {
+    title
+    value
+    __typename
+  }
+  guidelineDailyAmount {
+    ...GDA
+    __typename
+  }
+  allergenInfo: allergens {
+    name
+    values
+    __typename
+  }
+  nutritionInfo {
+    name
+    perComp: value1
+    perServing: value2
+    referenceIntake: value3
+    referencePercentage: value4
+    __typename
+  }
+  __typename
+}
+
+fragment Details on ProductDetailsType {
+  ingredients
+  legalLabelling
+  packSize {
+    value
+    units
+    __typename
+  }
+  allergenInfo: allergens {
+    name
+    values
+    __typename
+  }
+  storage
+  nutritionInfo: nutrition {
+    ...Nutrition
+    __typename
+  }
+  specifications {
+    specificationAttributes {
+      attributeName: name
+      attributeValue: value
+      __typename
+    }
+    __typename
+  }
+  otherNutritionInformation
+  hazardInfo {
+    chemicalName
+    productName
+    signalWord
+    statements
+    symbolCodes
+    __typename
+  }
+  guidelineDailyAmount {
+    ...GDA
+    __typename
+  }
+  numberOfUses
+  preparationAndUsage
+  freezingInstructions {
+    standardGuidelines
+    freezingGuidelines
+    defrosting
+    __typename
+  }
+  manufacturerMarketing
+  productMarketing
+  brandMarketing
+  otherInformation
+  additives
+  warnings
+  netContents
+  drainedWeight
+  safetyWarning
+  lowerAgeLimit
+  upperAgeLimit
+  healthmark
+  recyclingInfo
+  nappyInfo: nappies {
+    quantity
+    nappySize
+    __typename
+  }
+  alcoholInfo: alcohol {
+    ...Alcohol
+    __typename
+  }
+  cookingInstructions {
+    ...CookingInstructions
+    __typename
+  }
+  originInformation {
+    title
+    value
+    __typename
+  }
+  dosage
+  preparationGuidelines
+  directions
+  features
+  healthClaims
+  boxContents
+  nutritionalClaims
+  __typename
+}
+
+fragment VariationProducts on VariationsType {
+  products {
+    title
+    tpnc
+    tpnb
+    id
+    variationAttributes {
+      ...VariationAttributes
+      __typename
+    }
+    gtin
+    seller {
+      id
+      __typename
+    }
+    sellers(type: $sellerTypeForVariations) {
+      results {
+        promotions {
+          id
+          description
+          __typename
+        }
+        isForSale
+        status
+        id
+        __typename
+        seller {
+          id
+          __typename
+        }
+      }
+      __typename
+    }
+    __typename
+  }
+  __typename
+}
+
+fragment VariationAttributes on VariationAttributesType {
+  attributeGroup
+  attributeGroupData {
+    name
+    value
+    attributes {
+      name
+      value
+      __typename
+    }
+    __typename
+  }
+  __typename
+}
+
+fragment Fulfilment on ProductDeliveryType {
+  cutoff
+  deliveryType
+  start
+  end
+  minDeliveryDays
+  maxDeliveryDays
+  charges {
+    value
+    __typename
+    criteria {
+      __typename
+      ... on ProductDeliveryCriteria {
+        deliveryType: type
+        deliveryvalue: value
+        __typename
+      }
+      ... on ProductDeliveryBasketValueCriteria {
+        type
+        value
+        __typename
       }
     }
   }
+  __typename
+}
+
+fragment Sellers on ProductSellers {
+  results {
+    id
+    __typename
+    seller {
+      id
+      name
+      partnerName
+      businessName
+      __typename
+    }
+    price {
+      actual
+      unitPrice
+      unitOfMeasure
+      __typename
+    }
+    promotions {
+      id
+      promotionType
+      startDate
+      endDate
+      description
+      unitSellingInfo
+      price {
+        beforeDiscount
+        afterDiscount
+        __typename
+      }
+      attributes
+      qualities
+      info {
+        title
+        __typename
+      }
+      metaData {
+        seo {
+          afterDiscountPrice
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    ... on MPProduct {
+      bestDelivery: fulfilment(deliveryOptions: BEST) {
+        ...Fulfilment
+        ... on ProductReturnType {
+          __typename
+          daysToReturn
+        }
+        __typename
+      }
+      fulfilment {
+        ...Fulfilment
+        ... on ProductReturnType {
+          __typename
+          daysToReturn
+        }
+        __typename
+      }
+      __typename
+    }
+    returnDetails {
+      displayName
+      returnMethod
+      daysToReturn
+      charges {
+        value
+        currency
+        __typename
+      }
+      __typename
+    }
+    status
+    unavailabilityReasons {
+      type
+      subReason
+      __typename
+    }
+    isForSale
+  }
+  totalCount
+  __typename
 }`
 
 export interface FilterCriteria {
@@ -508,10 +1289,48 @@ export class TescoAPI {
   }
 
   static async getProduct(options: { tpnc: string }) {
+    // Try a simpler query first to test if the API works
+    const simpleQuery = `#graphql
+      query GetProduct($tpnc: String!) {
+        product(tpnc: $tpnc) {
+          id
+          tpnc
+          title
+          price {
+            actual
+            unitPrice
+            unitOfMeasure
+          }
+        }
+      }`
+    
     const variables = {
-      tpnc: options.tpnc,
+      tpnc: options.tpnc
     }
-    return graphqlRequest<GetProductResponse>(GET_PRODUCT_QUERY, variables, this.proxyUrl)
+    
+    console.log('Testing simple product query with TPNC:', options.tpnc)
+    const simpleResponse = await graphqlRequest<GetProductResponse>(simpleQuery, variables, this.proxyUrl)
+    
+    if (simpleResponse.errors) {
+      console.log('Simple query failed:', simpleResponse.errors)
+      return simpleResponse
+    }
+    
+    console.log('Simple query succeeded, trying full query')
+    
+    // If simple query works, try the full query
+    const fullVariables = {
+      tpnc: options.tpnc,
+      skipReviews: false,
+      offset: 0,
+      count: 10,
+      includeVariations: true,
+      includeFulfilment: true,
+      markRecentlyViewed: false,
+      sellersType: "ALL",
+      sellerTypeForVariations: "TOP"
+    }
+    return graphqlRequest<GetProductResponse>(GET_PRODUCT_QUERY, fullVariables, this.proxyUrl)
   }
 }
 

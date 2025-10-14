@@ -586,7 +586,7 @@ export default function Search() {
     
     const wishlistItem = {
       id: `${product.id}-${Date.now()}`,
-      tpnc: product.id,
+      tpnc: product.tpnc,
       title: product.title,
       color,
       size,
@@ -1671,7 +1671,7 @@ export default function Search() {
                           const price = p.price?.actual || p.price?.price || 0
                           setBasketItems(prev => [...prev, {
                             id: p.id,
-                            tpnc: p.id,
+                            tpnc: p.tpnc,
                             title: p.title,
                             color: '',
                             size: '',
@@ -1718,7 +1718,7 @@ export default function Search() {
                           const price = p.price?.actual || p.price?.price || 0
                           setBasketItems(prev => [...prev, {
                             id: p.id,
-                            tpnc: p.id,
+                            tpnc: p.tpnc,
                             title: p.title,
                             color: '',
                             size: '',
@@ -1843,10 +1843,7 @@ export default function Search() {
                         cardElement.removeAttribute('data-card-is-scrolling')
                       }}
                       onClick={() => {
-                        // Modal disabled
-                        // if (activeCardId === p.id) {
-                        //   openProductModal(index)
-                        // }
+                        window.location.href = `/product/${p.tpnc}`
                       }}
                       onMouseEnter={() => {
                         // Only activate on hover for mouse users
@@ -1987,7 +1984,7 @@ export default function Search() {
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation()
-                                      const existingItem = wishlistItems.find(item => item.tpnc === p.id)
+                                      const existingItem = wishlistItems.find(item => item.tpnc === p.tpnc)
                                       if (existingItem) {
                                         removeFromWishlist(existingItem.id)
                                       } else {
@@ -2000,7 +1997,7 @@ export default function Search() {
                                     onTouchEnd={(e) => {
                                       e.stopPropagation()
                                       e.preventDefault()
-                                      const existingItem = wishlistItems.find(item => item.tpnc === p.id)
+                                      const existingItem = wishlistItems.find(item => item.tpnc === p.tpnc)
                                       if (existingItem) {
                                         removeFromWishlist(existingItem.id)
                                       } else {
@@ -2009,7 +2006,7 @@ export default function Search() {
                                     }}
                                     className="absolute top-[8px] right-[8px] z-[2] p-1 bg-white rounded-full hover:scale-110 active:scale-95 transition-transform pointer-events-auto"
                                   >
-                                    {wishlistItems.some(item => item.tpnc === p.id) ? (
+                                    {wishlistItems.some(item => item.tpnc === p.tpnc) ? (
                                       <svg width="24" height="24" viewBox="0 0 24 24" fill="black" xmlns="http://www.w3.org/2000/svg">
                                         <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                                       </svg>
