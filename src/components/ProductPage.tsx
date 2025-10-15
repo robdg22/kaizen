@@ -178,12 +178,8 @@ export default function ProductPage() {
                         unitOfMeasure.toLowerCase() !== 'each' && 
                         unitPrice !== `£${price.toFixed(2)}`
 
-  // Detect if this is a clothing product (F&F)
-  const isClothingProduct = product.brandName?.toLowerCase().includes('f&f') || 
-                           product.brandName?.toLowerCase().includes('florence') ||
-                           product.title?.toLowerCase().includes('f&f') ||
-                           product.title?.toLowerCase().includes('florence') ||
-                           product.details?.clothingInfo !== undefined
+  // Detect if this is a clothing product (F&F) based on superDepartment
+  const isClothingProduct = product.superDepartmentName === 'Clothing & Accessories'
 
   return (
     <div className="min-h-screen bg-gray-50">
