@@ -508,13 +508,32 @@ export default function Search() {
   }
 
   // Fetch product variations (all sizes/colors) when hovering/tapping a card
-  const fetchProductVariations = async (productId: string, currentColor?: string, currentSize?: string) => {
+  const fetchProductVariations = async (tpnc: string, currentColor?: string, currentSize?: string) => {
+    console.log('fetchProductVariations called with TPNC:', tpnc, 'currentColor:', currentColor, 'currentSize:', currentSize)
+    
+    // Find the product by tpnc to get its id for consistent key usage
+    const product = [...groceryProducts, ...clothingProducts].find(p => p.tpnc === tpnc)
+    if (!product) {
+      console.log('Product not found for TPNC:', tpnc)
+      return
+    }
+    
+    const productId = product.id
+    console.log('Found product:', product.title, 'ID:', productId)
+    
     // Don't fetch if we already have variations for this product
-    if (productVariations[productId]) return
+    if (productVariations[productId]) {
+      console.log('Variations already exist for product:', productId)
+      return
+    }
     
     try {
-      const result = await TescoAPI.getProduct({ tpnc: productId })
+      console.log('Fetching product variations from API for TPNC:', tpnc)
+      const result = await TescoAPI.getProduct({ tpnc: tpnc })
+      console.log('API response:', result)
+      
       if (result.data?.product?.variations?.products) {
+        console.log('Found variations:', result.data.product.variations.products.length, 'variants')
         setProductVariations(prev => ({
           ...prev,
           [productId]: result.data!.product.variations!.products
@@ -527,6 +546,8 @@ export default function Search() {
         if (currentSize && !selectedSize[productId]) {
           setSelectedSize(prev => ({ ...prev, [productId]: currentSize }))
         }
+      } else {
+        console.log('No variations found in API response')
       }
     } catch (error) {
       console.error('Failed to fetch product variations:', error)
@@ -1770,6 +1791,11 @@ export default function Search() {
                                     p.title?.toLowerCase().includes('f&f') ||
                                     p.title?.toLowerCase().includes('florence')
                   
+                  // Debug logging for F&F detection
+                  if (isFFProduct) {
+                    console.log('F&F product detected:', p.title, 'Brand:', p.brandName, 'TPNC:', p.tpnc)
+                  }
+                  
                   return (
                     <div 
                       key={p.id}
@@ -1826,7 +1852,8 @@ export default function Search() {
                           if (isFFProduct) {
                             const currentColor = p.variationAttributes?.find(attr => attr.attributeGroup === 'colour')?.attributeGroupData?.value
                             const currentSize = p.variationAttributes?.find(attr => attr.attributeGroup === 'size')?.attributeGroupData?.value
-                            fetchProductVariations(p.id, currentColor, currentSize)
+                            console.log('Fetching variations for F&F product:', p.title, 'TPNC:', p.tpnc, 'Has variationAttributes:', !!p.variationAttributes)
+                            fetchProductVariations(p.tpnc, currentColor, currentSize)
                           }
                         }
                         
@@ -1859,7 +1886,8 @@ export default function Search() {
                         if (isFFProduct) {
                           const currentColor = p.variationAttributes?.find(attr => attr.attributeGroup === 'colour')?.attributeGroupData?.value
                           const currentSize = p.variationAttributes?.find(attr => attr.attributeGroup === 'size')?.attributeGroupData?.value
-                          fetchProductVariations(p.id, currentColor, currentSize)
+                          console.log('Fetching variations for F&F product (hover):', p.title, 'TPNC:', p.tpnc, 'Has variationAttributes:', !!p.variationAttributes)
+                          fetchProductVariations(p.tpnc, currentColor, currentSize)
                         }
                       }}
                       onMouseLeave={() => {

@@ -490,6 +490,7 @@ query GetCategoryProducts($superDepartment: String, $department: String, $page: 
     products {
       id
       baseProductId
+      tpnc
       title
       brandName
       shortDescription
@@ -505,6 +506,17 @@ query GetCategoryProducts($superDepartment: String, $department: String, $page: 
       superDepartmentName
       departmentId
       departmentName
+      variationAttributes {
+        attributeGroup
+        attributeGroupData {
+          name
+          value
+          attributes {
+            name
+            value
+          }
+        }
+      }
     }
   }
 }
