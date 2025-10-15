@@ -5,6 +5,7 @@ import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import TescoHeader from './TescoHeader'
 import FnFHeader from './FnFHeader'
+import BasketSidebar from './BasketSidebar'
 
 export default function ProductPage() {
   const { tpnc } = useParams<{ tpnc: string }>()
@@ -22,6 +23,11 @@ export default function ProductPage() {
   const [basketCount, setBasketCount] = useState(0)
   const [wishlistCount] = useState(0)
   const [variantImages, setVariantImages] = useState<Record<string, string[]>>({})
+  
+  // Basket sidebar state
+  const [showBasket, setShowBasket] = useState(false)
+  const [basketItems, setBasketItems] = useState<any[]>([])
+  const [basketTimerRef, setBasketTimerRef] = useState<number | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [viewMode, setViewMode] = useState<'zoomIn' | 'default' | 'zoomOut'>('default')
@@ -146,8 +152,19 @@ export default function ProductPage() {
           isClothing: true
         }
         
+        setBasketItems(prev => [...prev, basketItem])
         setBasketCount(prev => prev + 1)
         setBasketTotal(prev => Number((prev + price).toFixed(2)))
+        
+        // Show basket sidebar
+        setShowBasket(true)
+        if (basketTimerRef) {
+          window.clearTimeout(basketTimerRef)
+        }
+        const timer = window.setTimeout(() => {
+          setShowBasket(false)
+        }, 3000)
+        setBasketTimerRef(timer)
         
         console.log('Added clothing item to basket:', basketItem)
       }
@@ -165,11 +182,37 @@ export default function ProductPage() {
         isClothing: false
       }
       
+      setBasketItems(prev => [...prev, basketItem])
       setBasketCount(prev => prev + 1)
       setBasketTotal(prev => Number((prev + price).toFixed(2)))
       
+      // Show basket sidebar
+      setShowBasket(true)
+      if (basketTimerRef) {
+        window.clearTimeout(basketTimerRef)
+      }
+      const timer = window.setTimeout(() => {
+        setShowBasket(false)
+      }, 3000)
+      setBasketTimerRef(timer)
+      
       console.log('Added regular item to basket:', basketItem)
     }
+  }
+
+  // Remove item from basket
+  const removeFromBasket = (itemId: string) => {
+    setBasketItems(prev => {
+      const updatedItems = prev.filter(item => item.id !== itemId)
+      const removedItem = prev.find(item => item.id === itemId)
+      
+      if (removedItem) {
+        setBasketCount(prevCount => Math.max(0, prevCount - 1))
+        setBasketTotal(prevTotal => Math.max(0, Number((prevTotal - removedItem.price).toFixed(2))))
+      }
+      
+      return updatedItems
+    })
   }
 
   // Fetch variant images when color changes
@@ -750,6 +793,16 @@ export default function ProductPage() {
           </div>
         </div>
       </div>
+      
+      {/* Basket Sidebar */}
+      <BasketSidebar
+        isOpen={showBasket}
+        onClose={() => setShowBasket(false)}
+        items={basketItems}
+        total={basketTotal}
+        onRemoveItem={removeFromBasket}
+        mode={isClothingProduct ? 'fnf' : 'tesco'}
+      />
     </div>
   )
 }
