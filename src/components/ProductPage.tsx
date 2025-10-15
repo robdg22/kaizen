@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { TescoAPI, type GetProductResponse } from '../lib/tesco'
+import { TescoAPI, type GetProductResponse, type TaxonomyItem } from '../lib/tesco'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import TescoHeader from './TescoHeader'
@@ -18,13 +18,18 @@ export default function ProductPage() {
   const [selectedSize, setSelectedSize] = useState<string>('')
   
   // Header state (simplified for product page)
-  const [basketTotal] = useState(0)
-  const [basketCount] = useState(0)
+  const [basketTotal, setBasketTotal] = useState(0)
+  const [basketCount, setBasketCount] = useState(0)
   const [wishlistCount] = useState(0)
+  const [variantImages, setVariantImages] = useState<Record<string, string[]>>({})
   const [searchQuery, setSearchQuery] = useState('')
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [viewMode, setViewMode] = useState<'zoomIn' | 'default' | 'zoomOut'>('default')
   const [hasSearched] = useState(false)
+  
+  // Taxonomy state
+  const [categories, setCategories] = useState<TaxonomyItem[]>([])
+  const [fnfCategories, setFnfCategories] = useState<TaxonomyItem[]>([])
 
   useEffect(() => {
     if (!tpnc) {
@@ -88,6 +93,35 @@ export default function ProductPage() {
     fetchProduct()
   }, [tpnc])
 
+  // Fetch taxonomy/categories on mount
+  useEffect(() => {
+    const fetchTaxonomy = async () => {
+      // Fetch Tesco categories with rounded style
+      const tescoResponse = await TescoAPI.getTaxonomy({ style: 'rounded' })
+      if (tescoResponse.data?.taxonomy) {
+        const categoriesWithImages = tescoResponse.data.taxonomy.filter(item => 
+          item.images && item.images.length > 0
+        )
+        setCategories(categoriesWithImages)
+      }
+      
+      // Fetch F&F categories without rounded style
+      const fnfResponse = await TescoAPI.getTaxonomy()
+      if (fnfResponse.data?.taxonomy) {
+        const clothingCategory = fnfResponse.data.taxonomy.find(item => 
+          item.name === 'Clothing & Accessories'
+        )
+        if (clothingCategory?.children) {
+          const clothingDepartments = clothingCategory.children.filter(child =>
+            child.images && child.images.length > 0
+          )
+          setFnfCategories(clothingDepartments)
+        }
+      }
+    }
+    fetchTaxonomy()
+  }, [])
+
   const handleAddToBasket = () => {
     if (!product) return
     
@@ -100,15 +134,98 @@ export default function ProductPage() {
       })
       
       if (selectedVariant) {
-        // TODO: Implement add to basket functionality for clothing
+        const price = product.price?.actual || 0
+        const basketItem = {
+          id: `${selectedVariant.tpnc}-${Date.now()}`,
+          tpnc: selectedVariant.tpnc,
+          title: product.title,
+          color: selectedColor,
+          size: selectedSize,
+          price,
+          imageUrl: product.media?.defaultImage?.url || product.defaultImageUrl || '',
+          isClothing: true
+        }
+        
+        setBasketCount(prev => prev + 1)
+        setBasketTotal(prev => Number((prev + price).toFixed(2)))
+        
+        console.log('Added clothing item to basket:', basketItem)
       }
     } else {
       // For regular products
-      console.log('Add to basket (regular):', product.id, 'Quantity:', quantity)
-      // TODO: Implement add to basket functionality for regular products
+      const price = product.price?.actual || 0
+      const basketItem = {
+        id: `${product.tpnc}-${Date.now()}`,
+        tpnc: product.tpnc,
+        title: product.title,
+        color: '',
+        size: '',
+        price,
+        imageUrl: product.media?.defaultImage?.url || product.defaultImageUrl || '',
+        isClothing: false
+      }
+      
+      setBasketCount(prev => prev + 1)
+      setBasketTotal(prev => Number((prev + price).toFixed(2)))
+      
+      console.log('Added regular item to basket:', basketItem)
     }
   }
 
+  // Fetch variant images when color changes
+  const fetchVariantImages = async (variantTpnc: string) => {
+    try {
+      const result = await TescoAPI.getProduct({ tpnc: variantTpnc })
+      if (result.data?.product?.media?.images) {
+        const images = result.data.product.media.images.map(img => img.url)
+        setVariantImages(prev => ({ ...prev, [variantTpnc]: images }))
+      }
+    } catch (error) {
+      console.error('Failed to fetch variant images:', error)
+    }
+  }
+
+  // Handle color change
+  const handleColorChange = (newColor: string) => {
+    setSelectedColor(newColor)
+    setSelectedSize('') // Reset size when color changes
+    
+    // Find a variant with the new color to get its images
+    if (product?.variations?.products) {
+      const colorVariant = product.variations.products.find(variant => {
+        const variantColor = variant.variationAttributes?.find(attr => attr.attributeGroup === 'colour')?.attributeGroupData?.value
+        return variantColor === newColor
+      })
+      
+      if (colorVariant) {
+        fetchVariantImages(colorVariant.tpnc)
+      }
+    }
+  }
+
+  // Get current images based on selected color
+  const getCurrentImages = () => {
+    if (!product) return []
+    
+    if (isClothingProduct && selectedColor && product.variations?.products) {
+      // Find variant with selected color
+      const colorVariant = product.variations.products.find(variant => {
+        const variantColor = variant.variationAttributes?.find(attr => attr.attributeGroup === 'colour')?.attributeGroupData?.value
+        return variantColor === selectedColor
+      })
+      
+      if (colorVariant && variantImages[colorVariant.tpnc]) {
+        return variantImages[colorVariant.tpnc]
+      }
+    }
+    
+    // Fallback to original product images
+    return [
+      product.media?.defaultImage?.url || product.defaultImageUrl,
+      ...(product.media?.images?.map(img => img.url) || []),
+      ...(product.images?.display?.default?.url ? [product.images.display.default.url] : [])
+    ].filter(Boolean) as string[]
+  }
 
   if (loading) {
     return (
@@ -156,12 +273,8 @@ export default function ProductPage() {
     )
   }
 
-  // Get product images
-  const productImages = [
-    product.media?.defaultImage?.url || product.defaultImageUrl,
-    ...(product.media?.images?.map(img => img.url) || []),
-    ...(product.images?.display?.default?.url ? [product.images.display.default.url] : [])
-  ].filter(Boolean) as string[]
+  // Get product images (will be updated by getCurrentImages)
+  const productImages = getCurrentImages()
 
   // Get product price
   const price = product.price?.actual || 0
@@ -202,7 +315,7 @@ export default function ProductPage() {
           onMobileMenuOpen={() => setIsMobileMenuOpen(true)}
           onMobileMenuClose={() => setIsMobileMenuOpen(false)}
           onLogoClick={() => navigate('/')}
-          categories={[]}
+          categories={fnfCategories}
           onCategoryClick={() => {}}
         />
       ) : (
@@ -220,7 +333,7 @@ export default function ProductPage() {
           onMobileMenuOpen={() => setIsMobileMenuOpen(true)}
           onMobileMenuClose={() => setIsMobileMenuOpen(false)}
           onLogoClick={() => navigate('/')}
-          categories={[]}
+          categories={categories}
           onCategoryClick={() => {}}
         />
       )}
@@ -397,11 +510,7 @@ export default function ProductPage() {
                         <select
                           id="color"
                           value={selectedColor}
-                          onChange={(e) => {
-                            setSelectedColor(e.target.value)
-                            // Reset size when color changes
-                            setSelectedSize('')
-                          }}
+                          onChange={(e) => handleColorChange(e.target.value)}
                           className="w-full h-[36px] px-[12px] py-[6px] border border-black bg-white text-[16px] leading-[20px] text-black appearance-none"
                           style={{ fontFamily: 'FandF Sans, sans-serif' }}
                         >
