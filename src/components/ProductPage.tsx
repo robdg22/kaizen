@@ -621,7 +621,18 @@ export default function ProductPage() {
             </div>
 
             {/* Product Description */}
-            {product.description && (
+            {isClothingProduct && product.details?.clothingInfo?.specialFeature && product.details.clothingInfo.specialFeature.length > 0 ? (
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2" style={{ fontFamily: 'FandF Sans, sans-serif' }}>Description</h3>
+                <div className="space-y-2">
+                  {product.details.clothingInfo.specialFeature
+                    .filter(feature => feature.trim() !== '') // Filter out empty strings
+                    .map((feature, index) => (
+                    <p key={index} className="text-gray-600 leading-relaxed" style={{ fontFamily: 'FandF Sans, sans-serif' }}>{feature}</p>
+                  ))}
+                </div>
+              </div>
+            ) : product.description && (
               <div>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">Description</h3>
                 <p className="text-gray-600 leading-relaxed">{product.description}</p>
@@ -712,20 +723,6 @@ export default function ProductPage() {
                       </div>
                     )}
 
-                    {product.details.clothingInfo.specialFeature && product.details.clothingInfo.specialFeature.length > 0 && (
-                      <div>
-                        <h4 className="text-md font-medium text-black mb-2" style={{ fontFamily: 'FandF Sans, sans-serif' }}>Special Features</h4>
-                        <div className="space-y-2">
-                          {product.details.clothingInfo.specialFeature
-                            .filter(feature => feature.trim() !== '') // Filter out empty strings
-                            .map((feature, index) => (
-                            <div key={index} className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                              <p className="text-black text-sm" style={{ fontFamily: 'FandF Sans, sans-serif' }}>{feature}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
 
                     {product.details.clothingInfo.sizeChart && product.details.clothingInfo.sizeChart.url && (
                       <div>
