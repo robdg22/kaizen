@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { TescoAPI, type GetProductResponse } from '../lib/tesco'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
+import TescoHeader from './TescoHeader'
+import FnFHeader from './FnFHeader'
 
 export default function ProductPage() {
   const { tpnc } = useParams<{ tpnc: string }>()
@@ -14,6 +16,15 @@ export default function ProductPage() {
   const [quantity, setQuantity] = useState(1)
   const [selectedColor, setSelectedColor] = useState<string>('')
   const [selectedSize, setSelectedSize] = useState<string>('')
+  
+  // Header state (simplified for product page)
+  const [basketTotal] = useState(0)
+  const [basketCount] = useState(0)
+  const [wishlistCount] = useState(0)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [viewMode, setViewMode] = useState<'zoomIn' | 'default' | 'zoomOut'>('default')
+  const [hasSearched] = useState(false)
 
   useEffect(() => {
     if (!tpnc) {
@@ -98,10 +109,6 @@ export default function ProductPage() {
     }
   }
 
-  const handleAddToWishlist = () => {
-    // TODO: Implement add to wishlist functionality
-    console.log('Add to wishlist:', product?.id)
-  }
 
   if (loading) {
     return (
@@ -181,31 +188,46 @@ export default function ProductPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className={`${isClothingProduct ? 'bg-black' : 'bg-white'} border-b ${isClothingProduct ? 'border-gray-800' : 'border-gray-200'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <button
-              onClick={() => navigate(-1)}
-              className={`flex items-center ${isClothingProduct ? 'text-white hover:text-gray-300' : 'text-[#00539f] hover:text-[#004080]'} transition-colors`}
-            >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              Back
-            </button>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={handleAddToWishlist}
-                className={`p-2 ${isClothingProduct ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-[#00539f]'} transition-colors`}
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      {isClothingProduct ? (
+        <FnFHeader
+          basketTotal={basketTotal}
+          basketCount={basketCount}
+          wishlistCount={wishlistCount}
+          onSearch={() => navigate('/')}
+          onModeSwitch={() => navigate('/')}
+          onWishlistClick={() => {}}
+          searchQuery={searchQuery}
+          onQueryChange={setSearchQuery}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          hasSearched={hasSearched}
+          onBasketClick={() => {}}
+          isMobileMenuOpen={isMobileMenuOpen}
+          onMobileMenuOpen={() => setIsMobileMenuOpen(true)}
+          onMobileMenuClose={() => setIsMobileMenuOpen(false)}
+          onLogoClick={() => navigate('/')}
+          categories={[]}
+          onCategoryClick={() => {}}
+        />
+      ) : (
+        <TescoHeader
+          basketTotal={basketTotal}
+          basketCount={basketCount}
+          wishlistCount={wishlistCount}
+          onSearch={() => navigate('/')}
+          onModeSwitch={() => navigate('/')}
+          searchQuery={searchQuery}
+          onQueryChange={setSearchQuery}
+          onBasketClick={() => {}}
+          onWishlistClick={() => {}}
+          isMobileMenuOpen={isMobileMenuOpen}
+          onMobileMenuOpen={() => setIsMobileMenuOpen(true)}
+          onMobileMenuClose={() => setIsMobileMenuOpen(false)}
+          onLogoClick={() => navigate('/')}
+          categories={[]}
+          onCategoryClick={() => {}}
+        />
+      )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
