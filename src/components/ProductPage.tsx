@@ -203,29 +203,6 @@ export default function ProductPage() {
     }
   }
 
-  // Get current images based on selected color
-  const getCurrentImages = () => {
-    if (!product) return []
-    
-    if (isClothingProduct && selectedColor && product.variations?.products) {
-      // Find variant with selected color
-      const colorVariant = product.variations.products.find(variant => {
-        const variantColor = variant.variationAttributes?.find(attr => attr.attributeGroup === 'colour')?.attributeGroupData?.value
-        return variantColor === selectedColor
-      })
-      
-      if (colorVariant && variantImages[colorVariant.tpnc]) {
-        return variantImages[colorVariant.tpnc]
-      }
-    }
-    
-    // Fallback to original product images
-    return [
-      product.media?.defaultImage?.url || product.defaultImageUrl,
-      ...(product.media?.images?.map(img => img.url) || []),
-      ...(product.images?.display?.default?.url ? [product.images.display.default.url] : [])
-    ].filter(Boolean) as string[]
-  }
 
   if (loading) {
     return (
@@ -284,8 +261,6 @@ export default function ProductPage() {
     )
   }
 
-  // Get product images (will be updated by getCurrentImages)
-  const productImages = getCurrentImages()
 
   // Get product price
   const price = product.price?.actual || 0
@@ -304,6 +279,33 @@ export default function ProductPage() {
 
   // Detect if this is a clothing product (F&F) based on superDepartment
   const isClothingProduct = product.superDepartmentName === 'Clothing & Accessories'
+
+  // Get current images based on selected color
+  const getCurrentImages = () => {
+    if (!product) return []
+    
+    if (isClothingProduct && selectedColor && product.variations?.products) {
+      // Find variant with selected color
+      const colorVariant = product.variations.products.find(variant => {
+        const variantColor = variant.variationAttributes?.find(attr => attr.attributeGroup === 'colour')?.attributeGroupData?.value
+        return variantColor === selectedColor
+      })
+      
+      if (colorVariant && variantImages[colorVariant.tpnc]) {
+        return variantImages[colorVariant.tpnc]
+      }
+    }
+    
+    // Fallback to original product images
+    return [
+      product.media?.defaultImage?.url || product.defaultImageUrl,
+      ...(product.media?.images?.map(img => img.url) || []),
+      ...(product.images?.display?.default?.url ? [product.images.display.default.url] : [])
+    ].filter(Boolean) as string[]
+  }
+
+  // Get current images based on selected color
+  const productImages = getCurrentImages()
 
   return (
     <div className="min-h-screen bg-gray-50">
