@@ -27,7 +27,7 @@ function App() {
 
   const login = (password: string): boolean => {
     // Change this password to whatever you want
-    const correctPassword = 'test123'
+    const correctPassword = 'red-bridge-heart'
     
     if (password === correctPassword) {
       // Set cookie that expires in 7 days
