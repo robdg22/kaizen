@@ -7,6 +7,18 @@ export default function middleware(request: Request) {
     return new Response(null, { status: 200 })
   }
 
+  const url = new URL(request.url)
+  
+  // Always allow access to login page, API endpoints, and static assets
+  if (url.pathname === '/login' || 
+      url.pathname.startsWith('/api/') ||
+      url.pathname.startsWith('/assets/') || 
+      url.pathname.startsWith('/_next/') ||
+      url.pathname === '/favicon.ico' ||
+      url.pathname === '/vite.svg') {
+    return new Response(null, { status: 200 })
+  }
+
   // Check if user is already authenticated
   const authCookie = request.headers.get('cookie')?.split(';').find(c => c.trim().startsWith('site-auth='))
   const isAuthenticated = authCookie?.split('=')[1] === 'authenticated'
@@ -16,46 +28,13 @@ export default function middleware(request: Request) {
     return new Response(null, { status: 200 })
   }
 
-  // Check if this is a login attempt
-  const url = new URL(request.url)
-  if (url.pathname === '/login' && request.method === 'POST') {
-    return request.formData().then(data => {
-      const password = data.get('password')
-      
-      if (password === sitePassword) {
-        // Create response and set auth cookie
-        const response = new Response(null, {
-          status: 302,
-          headers: {
-            'Location': '/',
-            'Set-Cookie': 'site-auth=authenticated; HttpOnly; Secure; SameSite=Lax; Max-Age=604800; Path=/'
-          }
-        })
-        return response
-      } else {
-        // Wrong password, redirect back to login with error
-        const response = new Response(null, {
-          status: 302,
-          headers: {
-            'Location': '/login?error=1'
-          }
-        })
-        return response
-      }
-    })
-  }
-
   // If not authenticated and not on login page, redirect to login
-  if (url.pathname !== '/login') {
-    return new Response(null, {
-      status: 302,
-      headers: {
-        'Location': '/login'
-      }
-    })
-  }
-
-  return new Response(null, { status: 200 })
+  return new Response(null, {
+    status: 302,
+    headers: {
+      'Location': '/login'
+    }
+  })
 }
 
 export const config = {

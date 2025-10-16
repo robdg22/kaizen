@@ -11,19 +11,22 @@ const Login = () => {
     e.preventDefault()
     setIsLoading(true)
 
-    // Create form data and submit to /login endpoint
+    // Create form data and submit to /api/login endpoint
     const formData = new FormData()
     formData.append('password', password)
 
     try {
-      const response = await fetch('/login', {
+      const response = await fetch('/api/login', {
         method: 'POST',
         body: formData
       })
 
-      if (response.ok) {
-        // Redirect will be handled by the middleware
+      if (response.ok || response.status === 302) {
+        // Redirect will be handled by the API response
         window.location.href = '/'
+      } else {
+        // Handle error case
+        window.location.href = '/login?error=1'
       }
     } catch (error) {
       console.error('Login error:', error)
