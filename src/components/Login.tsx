@@ -1,23 +1,22 @@
 import { useState } from 'react'
-import { useAuth } from '../contexts/AuthContext'
 
-const Login = () => {
+interface LoginProps {
+  onLogin: (password: string) => boolean
+}
+
+const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(false)
-  const { login } = useAuth()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError(false)
 
-    const success = login(password)
+    const success = onLogin(password)
     
-    if (success) {
-      // Redirect to home page
-      window.location.href = '/'
-    } else {
+    if (!success) {
       setError(true)
       setIsLoading(false)
     }
