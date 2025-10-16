@@ -1,54 +1,61 @@
-import { NextRequest, NextResponse } from 'next/server'
-
-export function middleware(request: NextRequest) {
+export default function middleware(request: Request) {
   // Get the password from environment variables
   const sitePassword = process.env.SITE_PASSWORD
   
   // If no password is set, allow access (for development)
   if (!sitePassword) {
-    return NextResponse.next()
+    return new Response(null, { status: 200 })
   }
 
   // Check if user is already authenticated
-  const authCookie = request.cookies.get('site-auth')
-  const isAuthenticated = authCookie?.value === 'authenticated'
+  const authCookie = request.headers.get('cookie')?.split(';').find(c => c.trim().startsWith('site-auth='))
+  const isAuthenticated = authCookie?.split('=')[1] === 'authenticated'
 
   // If authenticated, allow access
   if (isAuthenticated) {
-    return NextResponse.next()
+    return new Response(null, { status: 200 })
   }
 
   // Check if this is a login attempt
   const url = new URL(request.url)
   if (url.pathname === '/login' && request.method === 'POST') {
-    const formData = request.formData()
-    return formData.then(data => {
+    return request.formData().then(data => {
       const password = data.get('password')
       
       if (password === sitePassword) {
         // Create response and set auth cookie
-        const response = NextResponse.redirect(new URL('/', request.url))
-        response.cookies.set('site-auth', 'authenticated', {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax',
-          maxAge: 60 * 60 * 24 * 7, // 7 days
-          path: '/'
+        const response = new Response(null, {
+          status: 302,
+          headers: {
+            'Location': '/',
+            'Set-Cookie': 'site-auth=authenticated; HttpOnly; Secure; SameSite=Lax; Max-Age=604800; Path=/'
+          }
         })
         return response
       } else {
         // Wrong password, redirect back to login with error
-        return NextResponse.redirect(new URL('/login?error=1', request.url))
+        const response = new Response(null, {
+          status: 302,
+          headers: {
+            'Location': '/login?error=1'
+          }
+        })
+        return response
       }
     })
   }
 
   // If not authenticated and not on login page, redirect to login
   if (url.pathname !== '/login') {
-    return NextResponse.redirect(new URL('/login', request.url))
+    return new Response(null, {
+      status: 302,
+      headers: {
+        'Location': '/login'
+      }
+    })
   }
 
-  return NextResponse.next()
+  return new Response(null, { status: 200 })
 }
 
 export const config = {
