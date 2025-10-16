@@ -12,12 +12,20 @@ function App() {
   // Check for existing authentication on mount
   useEffect(() => {
     const checkAuth = () => {
+      console.log('Checking authentication...')
+      console.log('Document cookie:', document.cookie)
+      
       const authCookie = document.cookie
         .split(';')
         .find(c => c.trim().startsWith('site-auth='))
       
+      console.log('Auth cookie found:', authCookie)
+      
       if (authCookie && authCookie.split('=')[1] === 'authenticated') {
+        console.log('User is authenticated')
         setIsAuthenticated(true)
+      } else {
+        console.log('User is not authenticated')
       }
       setIsLoading(false)
     }
@@ -43,6 +51,7 @@ function App() {
   }
 
   if (isLoading) {
+    console.log('App is loading...')
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -51,9 +60,11 @@ function App() {
   }
 
   if (!isAuthenticated) {
+    console.log('User not authenticated, showing login')
     return <Login onLogin={login} />
   }
 
+  console.log('User authenticated, showing main app')
   return (
     <Router>
       <div className="min-h-screen flex flex-col">
