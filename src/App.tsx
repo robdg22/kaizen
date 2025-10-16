@@ -2,10 +2,58 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Search from './components/Search'
 import ProductPage from './components/ProductPage'
 import Footer from './components/Footer'
+import Login from './components/Login'
+import { useState, useEffect } from 'react'
 
 function App() {
-  console.log('App component is rendering!')
-  
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Check for existing authentication on mount
+  useEffect(() => {
+    const checkAuth = () => {
+      const authCookie = document.cookie
+        .split(';')
+        .find(c => c.trim().startsWith('site-auth='))
+      
+      if (authCookie && authCookie.split('=')[1] === 'authenticated') {
+        setIsAuthenticated(true)
+      }
+      setIsLoading(false)
+    }
+
+    checkAuth()
+  }, [])
+
+  const login = (password: string): boolean => {
+    // Change this password to whatever you want
+    const correctPassword = 'test123'
+    
+    if (password === correctPassword) {
+      // Set cookie that expires in 7 days
+      const expires = new Date()
+      expires.setDate(expires.getDate() + 7)
+      
+      document.cookie = `site-auth=authenticated; expires=${expires.toUTCString()}; path=/; secure; samesite=lax`
+      setIsAuthenticated(true)
+      return true
+    }
+    
+    return false
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return <Login onLogin={login} />
+  }
+
   return (
     <Router>
       <div className="min-h-screen flex flex-col">
