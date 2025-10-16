@@ -28,12 +28,21 @@ A modern React application built with TypeScript, Vite, and Tailwind CSS. This p
    npm install
    ```
 
-2. **Start the development server:**
+2. **Set up password protection (optional):**
+   ```bash
+   # Copy the environment template
+   cp env.template .env.local
+   
+   # Edit .env.local and set your desired password
+   # SITE_PASSWORD=your-secure-password-here
+   ```
+
+3. **Start the development server:**
    ```bash
    npm run dev
    ```
 
-3. **Open your browser:**
+4. **Open your browser:**
    Visit `http://localhost:5173` to see your app running!
 
 ## 📝 Available Scripts
@@ -118,6 +127,37 @@ The project includes a custom Tailwind configuration in `tailwind.config.js`:
 
 The app automatically respects your system's dark mode preference using Tailwind's built-in dark mode support.
 
+## 🔒 Password Protection
+
+This site includes optional password protection using Vercel Edge Middleware. When enabled, visitors must enter a password before accessing the site.
+
+### Setup Password Protection
+
+1. **Local Development:**
+   ```bash
+   # Create .env.local file
+   cp env.template .env.local
+   
+   # Edit .env.local and set your password
+   SITE_PASSWORD=your-secure-password-here
+   ```
+
+2. **Production (Vercel):**
+   - Go to your Vercel project dashboard
+   - Navigate to Settings → Environment Variables
+   - Add `SITE_PASSWORD` with your desired password
+   - Redeploy your application
+
+### Features
+- ✅ Secure server-side authentication (can't be bypassed)
+- ✅ Session cookies (password cached for 7 days)
+- ✅ HTTP-only cookies (secure from JavaScript access)
+- ✅ Automatic redirect to login page
+- ✅ Clean, branded login interface
+
+### Disable Password Protection
+To disable password protection, simply remove or comment out the `SITE_PASSWORD` environment variable.
+
 ## 🚀 Deployment
 
 ### Build for Production
@@ -132,6 +172,8 @@ The built files will be in the `dist/` directory, ready for deployment to any st
 npm install -g vercel
 vercel
 ```
+
+**Important:** Don't forget to set the `SITE_PASSWORD` environment variable in your Vercel dashboard after deployment.
 
 ### Deploy to Netlify
 ```bash
