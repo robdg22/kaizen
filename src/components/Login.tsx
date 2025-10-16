@@ -1,35 +1,24 @@
 import { useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 
 const Login = () => {
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [searchParams] = useSearchParams()
-  const hasError = searchParams.get('error') === '1'
+  const [error, setError] = useState(false)
+  const { login } = useAuth()
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setError(false)
 
-    // Create form data and submit to /api/login endpoint
-    const formData = new FormData()
-    formData.append('password', password)
-
-    try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        body: formData
-      })
-
-      if (response.ok || response.status === 302) {
-        // Redirect will be handled by the API response
-        window.location.href = '/'
-      } else {
-        // Handle error case
-        window.location.href = '/login?error=1'
-      }
-    } catch (error) {
-      console.error('Login error:', error)
+    const success = login(password)
+    
+    if (success) {
+      // Redirect to home page
+      window.location.href = '/'
+    } else {
+      setError(true)
       setIsLoading(false)
     }
   }
@@ -71,7 +60,7 @@ const Login = () => {
             />
           </div>
 
-          {hasError && (
+          {error && (
             <div className="text-red-600 text-sm text-center">
               Incorrect password. Please try again.
             </div>
