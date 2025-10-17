@@ -458,8 +458,10 @@ export default function Search() {
     setGroceryProducts([])
     setClothingProducts([])
     
-    // Fetch category products using the department name
+    // For F&F categories, we need to query with both superDepartment and department
+    // to ensure we get clothing items from the correct hierarchy
     const result = await TescoAPI.getCategoryProducts({ 
+      superDepartment: 'Clothing & Accessories',
       department: category.name,
       count: 48
     })
@@ -470,8 +472,14 @@ export default function Search() {
     } else if (result.data?.category) {
       // Extract products from the simplified response
       const items = result.data.category.products
-      setClothingProducts(items)
-      setProducts(items)
+      
+      // Additional filter to ensure we only show clothing products
+      const clothingItems = items.filter((item: ProductItem) => 
+        item.superDepartmentName === 'Clothing & Accessories'
+      )
+      
+      setClothingProducts(clothingItems)
+      setProducts(clothingItems)
     }
     
     setIsLoading(false)

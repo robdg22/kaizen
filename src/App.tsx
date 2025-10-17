@@ -12,6 +12,28 @@ function App() {
   // Check for existing authentication on mount
   useEffect(() => {
     const checkAuth = () => {
+      // Check for URL bypass parameter
+      const urlParams = new URLSearchParams(window.location.search)
+      const bypassToken = urlParams.get('bypass')
+      
+      // Unique bypass token - change this to whatever you want
+      const validBypassToken = 'dslfjhshsdjhf342kjj2l3424xx84749374xy'
+      
+      if (bypassToken === validBypassToken) {
+        // Set authentication cookie when bypass is used
+        const expires = new Date()
+        expires.setDate(expires.getDate() + 7)
+        document.cookie = `site-auth=authenticated; expires=${expires.toUTCString()}; path=/; secure; samesite=lax`
+        setIsAuthenticated(true)
+        setIsLoading(false)
+        
+        // Clean up the URL by removing the bypass parameter
+        const newUrl = window.location.pathname + window.location.hash
+        window.history.replaceState({}, document.title, newUrl)
+        return
+      }
+      
+      // Check for existing authentication cookie
       const authCookie = document.cookie
         .split(';')
         .find(c => c.trim().startsWith('site-auth='))
